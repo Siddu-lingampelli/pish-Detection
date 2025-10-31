@@ -11,13 +11,13 @@ import './index.css';
 function App() {
   return (
     <Router>
-      <div className="min-h-screen">
+      <div className="min-h-screen bg-[#0a0a0a]">
         <Routes>
           <Route path="/" element={<Landing />} />
-          <Route path="/scanner" element={<><Navbar /><Home /></>} />
-          <Route path="/qr-scanner" element={<><Navbar /><QRScanner /></>} />
-          <Route path="/history" element={<><Navbar /><History /></>} />
-          <Route path="/analytics" element={<><Navbar /><Analytics /></>} />
+          <Route path="/scanner" element={<><Navbar /><div className="container mx-auto px-6 py-12"><Home /></div></>} />
+          <Route path="/qr-scanner" element={<><Navbar /><div className="py-12"><QRScanner /></div></>} />
+          <Route path="/history" element={<><Navbar /><div className="container mx-auto px-6 py-12"><History /></div></>} />
+          <Route path="/analytics" element={<><Navbar /><div className="container mx-auto px-6 py-12"><Analytics /></div></>} />
         </Routes>
       </div>
     </Router>

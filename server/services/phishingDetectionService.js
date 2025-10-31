@@ -22,6 +22,47 @@ const SUSPICIOUS_TLDS = [
   '.link', '.download', '.racing', '.webcam', '.date', '.stream'
 ];
 
+// Legitimate brand domains for typosquatting detection
+const LEGITIMATE_BRANDS = [
+  'google', 'facebook', 'microsoft', 'apple', 'amazon', 'netflix', 'paypal',
+  'instagram', 'twitter', 'linkedin', 'ebay', 'yahoo', 'adobe', 'spotify',
+  'dropbox', 'github', 'whatsapp', 'zoom', 'slack', 'reddit', 'wikipedia',
+  // Banking
+  'chase', 'wellsfargo', 'bankofamerica', 'citibank', 'hsbc', 'barclays',
+  // Indian banks and payment
+  'paytm', 'phonepe', 'googlepay', 'bhim', 'sbi', 'icici', 'hdfc', 'axis', 'kotak'
+];
+
+/**
+ * Calculate Levenshtein distance between two strings
+ */
+function levenshteinDistance(str1, str2) {
+  const len1 = str1.length;
+  const len2 = str2.length;
+  const matrix = [];
+
+  for (let i = 0; i <= len1; i++) {
+    matrix[i] = [i];
+  }
+
+  for (let j = 0; j <= len2; j++) {
+    matrix[0][j] = j;
+  }
+
+  for (let i = 1; i <= len1; i++) {
+    for (let j = 1; j <= len2; j++) {
+      const cost = str1[i - 1] === str2[j - 1] ? 0 : 1;
+      matrix[i][j] = Math.min(
+        matrix[i - 1][j] + 1,
+        matrix[i][j - 1] + 1,
+        matrix[i - 1][j - 1] + cost
+      );
+    }
+  }
+
+  return matrix[len1][len2];
+}
+
 class PhishingDetectionService {
   
   /**
@@ -138,6 +179,17 @@ class PhishingDetectionService {
     const hostname = parsedUrl.hostname.toLowerCase();
     const fullUrl = parsedUrl.href.toLowerCase();
 
+    // Extract domain name without TLD for typosquatting check
+    const domainParts = hostname.split('.');
+    const mainDomain = domainParts.length >= 2 ? domainParts[domainParts.length - 2] : hostname;
+
+    // Check for typosquatting (misspelled brand names)
+    const typosquattingCheck = this.checkTyposquatting(mainDomain);
+    if (typosquattingCheck.isTyposquatting) {
+      riskFactors.push(`Potential typosquatting: Similar to "${typosquattingCheck.similarTo}"`);
+      riskScore += 0.6; // High risk for typosquatting
+    }
+
     // Check for IP address in URL
     if (/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/.test(hostname)) {
       riskFactors.push('Uses IP address instead of domain name');
@@ -193,6 +245,71 @@ class PhishingDetectionService {
       riskFactors,
       riskScore: Math.min(riskScore, 1),
       has_suspicious_chars: suspiciousChars
+    };
+  }
+
+  /**
+   * Check for typosquatting attempts (misspelled brand domains)
+   */
+  checkTyposquatting(domain) {
+    // Remove common prefixes/suffixes
+    let cleanDomain = domain.replace(/^(www|m|mobile|secure|login|account|verify)[-.]?/, '');
+    cleanDomain = cleanDomain.replace(/[-_]?(login|secure|verify|account|portal|online|bank|pay)$/, '');
+
+    for (const brand of LEGITIMATE_BRANDS) {
+      // Exact match (it's the real brand, unless other factors are suspicious)
+      if (cleanDomain === brand) {
+        continue;
+      }
+
+      // Check similarity
+      const distance = levenshteinDistance(cleanDomain, brand);
+      const maxLength = Math.max(cleanDomain.length, brand.length);
+      const similarity = 1 - (distance / maxLength);
+
+      // If very similar (1-2 character difference), likely typosquatting
+      if (similarity >= 0.7 && distance <= 2) {
+        return {
+          isTyposquatting: true,
+          similarTo: brand,
+          distance: distance
+        };
+      }
+
+      // Check for common typosquatting patterns
+      // Double letters: google -> googlee, paypal -> paypall
+      const doubleLetterVariant = cleanDomain.replace(/(.)\1+/g, '$1');
+      if (doubleLetterVariant === brand) {
+        return {
+          isTyposquatting: true,
+          similarTo: brand,
+          distance: 1
+        };
+      }
+
+      // Missing letters: facebook -> facbook
+      if (brand.includes(cleanDomain) && brand.length - cleanDomain.length === 1) {
+        return {
+          isTyposquatting: true,
+          similarTo: brand,
+          distance: 1
+        };
+      }
+
+      // Extra letters: amazon -> amazone
+      if (cleanDomain.includes(brand) && cleanDomain.length - brand.length <= 2) {
+        return {
+          isTyposquatting: true,
+          similarTo: brand,
+          distance: 1
+        };
+      }
+    }
+
+    return {
+      isTyposquatting: false,
+      similarTo: null,
+      distance: 0
     };
   }
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { FaShieldAlt, FaHome, FaHistory, FaChartBar, FaQrcode } from 'react-icons/fa';
+import { FaShieldAlt, FaLink, FaHistory, FaChartBar, FaQrcode } from 'react-icons/fa';
 
 const Navbar = () => {
   const location = useLocation();
@@ -10,66 +10,67 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="bg-white shadow-lg">
-      <div className="container mx-auto px-4">
+    <nav className="bg-[#0a0a0a] border-b border-gray-800 sticky top-0 z-50 backdrop-blur-sm bg-opacity-90">
+      <div className="container mx-auto px-6">
         <div className="flex justify-between items-center py-4">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2">
-            <FaShieldAlt className="text-3xl text-blue-600" />
+          <Link to="/" className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-white rounded-md flex items-center justify-center">
+              <FaShieldAlt className="text-lg text-black" />
+            </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-800">PhishGuard</h1>
-              <p className="text-xs text-gray-500">AI-Powered Protection</p>
+              <div className="text-base font-semibold text-white">PhishGuard</div>
             </div>
           </Link>
 
           {/* Navigation Links */}
-          <div className="flex space-x-6">
-            <Link
-              to="/scanner"
-              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition ${
-                isActive('/scanner')
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-600 hover:bg-gray-100'
-              }`}
-            >
-              <FaHome />
-              <span className="font-medium">URL Scanner</span>
+          <div className="flex gap-2">
+            <Link to="/scanner">
+              <button
+                className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                  isActive('/scanner')
+                    ? 'bg-white text-black'
+                    : 'text-gray-400 hover:text-white'
+                }`}
+              >
+                URL Scanner
+              </button>
             </Link>
 
-            <Link
-              to="/qr-scanner"
-              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition ${
-                isActive('/qr-scanner')
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-600 hover:bg-gray-100'
-              }`}
-            >
-              <FaQrcode />
-              <span className="font-medium">QR Scanner</span>
+            <Link to="/qr-scanner">
+              <button
+                className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                  isActive('/qr-scanner')
+                    ? 'bg-white text-black'
+                    : 'text-gray-400 hover:text-white'
+                }`}
+              >
+                QR Scanner
+              </button>
             </Link>
 
-            <Link
-              to="/history"
-              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition ${
-                isActive('/history')
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-600 hover:bg-gray-100'
-              }`}
-            >
-              <FaHistory />
-              <span className="font-medium">History</span>
+            <Link to="/history">
+              <button
+                className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                  isActive('/history')
+                    ? 'bg-white text-black'
+                    : 'text-gray-400 hover:text-white'
+                }`}
+              >
+                History
+              </button>
             </Link>
 
-            <Link
-              to="/analytics"
-              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition ${
-                isActive('/analytics')
-                  ? 'bg-blue-600 text-white'
-                  : 'text-gray-600 hover:bg-gray-100'
-              }`}
-            >
-              <FaChartBar />
-              <span className="font-medium">Analytics</span>
+            <Link to="/analytics">
+              <button
+                className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
+                  isActive('/analytics')
+                    ? 'bg-white text-black'
+                    : 'text-gray-400 hover:text-white'
+                }`}
+              >
+                Analytics
+              </button>
             </Link>
           </div>
         </div>

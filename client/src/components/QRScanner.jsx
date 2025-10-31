@@ -76,43 +76,43 @@ const QRScanner = () => {
 
   const getRiskColor = (level) => {
     switch (level?.toUpperCase()) {
-      case 'HIGH': return 'text-red-600';
-      case 'MEDIUM': return 'text-yellow-600';
-      case 'LOW-MEDIUM': return 'text-orange-500';
-      case 'LOW': return 'text-green-600';
-      default: return 'text-gray-600';
+      case 'HIGH': return 'text-red-400';
+      case 'MEDIUM': return 'text-yellow-400';
+      case 'LOW-MEDIUM': return 'text-orange-400';
+      case 'LOW': return 'text-emerald-400';
+      default: return 'text-gray-400';
     }
   };
 
   const getRiskBgColor = (level) => {
     switch (level?.toUpperCase()) {
-      case 'HIGH': return 'bg-red-50 border-red-200';
-      case 'MEDIUM': return 'bg-yellow-50 border-yellow-200';
-      case 'LOW-MEDIUM': return 'bg-orange-50 border-orange-200';
-      case 'LOW': return 'bg-green-50 border-green-200';
-      default: return 'bg-gray-50 border-gray-200';
+      case 'HIGH': return 'bg-red-900/20 border-red-800';
+      case 'MEDIUM': return 'bg-yellow-900/20 border-yellow-800';
+      case 'LOW-MEDIUM': return 'bg-orange-900/20 border-orange-800';
+      case 'LOW': return 'bg-emerald-900/20 border-emerald-800';
+      default: return 'bg-gray-900/20 border-gray-800';
     }
   };
 
   const getRiskIcon = (level) => {
     switch (level?.toUpperCase()) {
-      case 'HIGH': return <FaTimesCircle className="text-red-600" />;
-      case 'MEDIUM': return <FaExclamationTriangle className="text-yellow-600" />;
-      case 'LOW-MEDIUM': return <FaExclamationTriangle className="text-orange-500" />;
-      case 'LOW': return <FaCheckCircle className="text-green-600" />;
-      default: return <FaCheckCircle className="text-gray-600" />;
+      case 'HIGH': return <FaTimesCircle className="text-red-400" />;
+      case 'MEDIUM': return <FaExclamationTriangle className="text-yellow-400" />;
+      case 'LOW-MEDIUM': return <FaExclamationTriangle className="text-orange-400" />;
+      case 'LOW': return <FaCheckCircle className="text-emerald-400" />;
+      default: return <FaCheckCircle className="text-gray-400" />;
     }
   };
 
   return (
     <div className="max-w-4xl mx-auto p-6">
-      <div className="bg-white rounded-lg shadow-lg p-6">
+      <div className="bg-[#111111] border border-gray-800 rounded-lg p-8">
         {/* Header */}
-        <div className="flex items-center gap-3 mb-6">
-          <FaQrcode className="text-3xl text-blue-600" />
+        <div className="flex items-center gap-3 mb-8">
+          <FaQrcode className="text-2xl text-white" />
           <div>
-            <h2 className="text-2xl font-bold text-gray-800">QR Code Scanner</h2>
-            <p className="text-gray-600 text-sm">Upload a QR code image to check for phishing threats</p>
+            <h2 className="text-2xl font-bold text-white tracking-tight">QR Code Scanner</h2>
+            <p className="text-gray-400 text-sm">Upload a QR code image to check for phishing threats</p>
           </div>
         </div>
 
@@ -120,9 +120,11 @@ const QRScanner = () => {
         {!result && (
           <div className="mb-6">
             <div
-              className={`border-2 border-dashed rounded-lg p-8 text-center ${
-                previewUrl ? 'border-blue-400 bg-blue-50' : 'border-gray-300 hover:border-blue-400'
-              } transition-colors cursor-pointer`}
+              className={`border-2 border-dashed rounded-lg p-12 text-center transition-all cursor-pointer ${
+                previewUrl 
+                  ? 'border-gray-700 bg-black/30' 
+                  : 'border-gray-800 hover:border-gray-700 bg-black/20'
+              }`}
               onClick={() => fileInputRef.current?.click()}
             >
               {previewUrl ? (
@@ -130,24 +132,24 @@ const QRScanner = () => {
                   <img
                     src={previewUrl}
                     alt="QR Code Preview"
-                    className="max-w-xs max-h-64 mx-auto rounded-lg shadow-md"
+                    className="max-w-xs max-h-64 mx-auto rounded-lg border border-gray-800"
                   />
-                  <p className="text-sm text-gray-600">{selectedFile?.name}</p>
+                  <p className="text-sm text-gray-400 font-mono">{selectedFile?.name}</p>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       handleReset();
                     }}
-                    className="text-red-500 hover:text-red-700 text-sm flex items-center gap-2 mx-auto"
+                    className="text-red-400 hover:text-red-300 text-sm flex items-center gap-2 mx-auto transition-colors"
                   >
                     <FaTimes /> Remove
                   </button>
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <FaUpload className="text-5xl text-gray-400 mx-auto" />
+                  <FaUpload className="text-5xl text-gray-600 mx-auto" />
                   <div>
-                    <p className="text-lg font-medium text-gray-700">
+                    <p className="text-lg font-medium text-white">
                       Click to upload QR code image
                     </p>
                     <p className="text-sm text-gray-500 mt-2">
@@ -171,15 +173,15 @@ const QRScanner = () => {
               <button
                 onClick={handleScanQR}
                 disabled={scanning}
-                className={`w-full mt-4 py-3 px-6 rounded-lg font-semibold text-white transition-all ${
+                className={`w-full mt-4 py-3 px-6 rounded-lg font-semibold transition-all ${
                   scanning
-                    ? 'bg-gray-400 cursor-not-allowed'
-                    : 'bg-blue-600 hover:bg-blue-700 active:scale-95'
+                    ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
+                    : 'bg-white text-black hover:bg-gray-200 active:scale-[0.98]'
                 }`}
               >
                 {scanning ? (
                   <span className="flex items-center justify-center gap-2">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-500"></div>
                     Scanning QR Code...
                   </span>
                 ) : (
@@ -194,28 +196,28 @@ const QRScanner = () => {
 
         {/* Error Message */}
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
-            <FaTimesCircle className="text-red-600 mt-1" />
+          <div className="mb-6 p-4 bg-red-900/20 border border-red-800 rounded-lg flex items-start gap-3">
+            <FaTimesCircle className="text-red-400 mt-1" />
             <div>
-              <p className="font-semibold text-red-800">Error</p>
-              <p className="text-red-600 text-sm">{error}</p>
+              <p className="font-semibold text-red-400">Error</p>
+              <p className="text-red-300/80 text-sm">{error}</p>
             </div>
           </div>
         )}
 
         {/* Results Section */}
         {result && (
-          <div className="space-y-6">
+          <div className="space-y-4">
             {/* Overall Risk Assessment */}
-            <div className={`p-6 rounded-lg border-2 ${getRiskBgColor(result.overallRisk?.level)}`}>
-              <div className="flex items-start gap-4">
+            <div className={`p-8 rounded-lg border ${getRiskBgColor(result.overallRisk?.level)}`}>
+              <div className="flex items-start gap-6">
                 <div className="text-4xl mt-1">{getRiskIcon(result.overallRisk?.level)}</div>
                 <div className="flex-1">
-                  <h3 className={`text-2xl font-bold ${getRiskColor(result.overallRisk?.level)}`}>
-                    {result.overallRisk?.level} RISK
+                  <h3 className={`text-3xl font-bold tracking-tight ${getRiskColor(result.overallRisk?.level)}`}>
+                    {result.overallRisk?.level}
                   </h3>
-                  <p className="text-lg font-semibold mt-2">{result.overallRisk?.action}</p>
-                  <p className="text-sm text-gray-600 mt-1">
+                  <p className="text-lg text-white font-medium mt-2">{result.overallRisk?.action}</p>
+                  <p className="text-xs uppercase tracking-wider text-gray-500 mt-3">
                     Risk Score: {result.overallRisk?.score}/100
                   </p>
                 </div>
@@ -223,20 +225,20 @@ const QRScanner = () => {
             </div>
 
             {/* QR Code Data */}
-            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-              <h4 className="font-semibold text-gray-800 mb-2 flex items-center gap-2">
+            <div className="bg-black/30 p-6 rounded-lg border border-gray-800">
+              <h4 className="text-xs uppercase tracking-wider font-semibold text-gray-400 mb-4 flex items-center gap-2">
                 <FaQrcode /> QR Code Contents
               </h4>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <div>
-                  <span className="text-sm font-medium text-gray-600">Type:</span>
-                  <span className="ml-2 text-sm font-mono bg-white px-2 py-1 rounded">
+                  <span className="text-xs uppercase tracking-wider text-gray-500">Type</span>
+                  <span className="ml-3 text-sm font-mono text-white bg-black/50 px-3 py-1 rounded border border-gray-800">
                     {result.qrCode?.type}
                   </span>
                 </div>
                 <div>
-                  <span className="text-sm font-medium text-gray-600">Data:</span>
-                  <div className="mt-1 p-2 bg-white rounded text-sm font-mono break-all">
+                  <span className="text-xs uppercase tracking-wider text-gray-500 block mb-2">Data</span>
+                  <div className="p-3 bg-black/50 rounded border border-gray-800 text-sm font-mono text-white break-all">
                     {result.qrCode?.data}
                   </div>
                 </div>
@@ -245,23 +247,23 @@ const QRScanner = () => {
 
             {/* UPI Payment Details */}
             {result.upiPayment && (
-              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                <h4 className="font-semibold text-blue-800 mb-3">💳 UPI Payment Details</h4>
-                <div className="grid grid-cols-2 gap-3 text-sm">
+              <div className="bg-[#111111] p-6 rounded-lg border border-gray-800">
+                <h4 className="text-xs uppercase tracking-wider font-semibold text-gray-400 mb-4">UPI Payment Details</h4>
+                <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <span className="text-gray-600">Payee:</span>
-                    <p className="font-semibold">{result.upiPayment.payee}</p>
+                    <span className="text-xs uppercase tracking-wider text-gray-500 block mb-1">Payee</span>
+                    <p className="font-semibold text-white">{result.upiPayment.payee}</p>
                   </div>
                   <div>
-                    <span className="text-gray-600">Amount:</span>
-                    <p className="font-semibold text-green-600">
+                    <span className="text-xs uppercase tracking-wider text-gray-500 block mb-1">Amount</span>
+                    <p className="font-semibold text-emerald-400">
                       ₹{result.upiPayment.amount}
                     </p>
                   </div>
                   {result.upiPayment.note && (
                     <div className="col-span-2">
-                      <span className="text-gray-600">Note:</span>
-                      <p className="font-medium">{result.upiPayment.note}</p>
+                      <span className="text-xs uppercase tracking-wider text-gray-500 block mb-1">Note</span>
+                      <p className="font-medium text-white">{result.upiPayment.note}</p>
                     </div>
                   )}
                 </div>
@@ -270,11 +272,14 @@ const QRScanner = () => {
 
             {/* Risk Factors */}
             {result.overallRisk?.factors?.length > 0 && (
-              <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-                <h4 className="font-semibold text-yellow-800 mb-2">⚠️ Risk Factors Detected</h4>
-                <ul className="list-disc list-inside space-y-1 text-sm">
+              <div className="bg-[#111111] p-6 rounded-lg border border-gray-800">
+                <h4 className="text-xs uppercase tracking-wider font-semibold text-gray-400 mb-4">Risk Factors Detected</h4>
+                <ul className="space-y-2">
                   {result.overallRisk.factors.map((factor, index) => (
-                    <li key={index} className="text-gray-700">{factor}</li>
+                    <li key={index} className="flex items-start gap-3 text-sm text-gray-300">
+                      <span className="text-red-400 mt-1">•</span>
+                      <span>{factor}</span>
+                    </li>
                   ))}
                 </ul>
               </div>
@@ -282,15 +287,18 @@ const QRScanner = () => {
 
             {/* AI Analysis */}
             {result.security?.aiAnalysis?.explanation && (
-              <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
-                <h4 className="font-semibold text-purple-800 mb-2">🤖 AI Analysis</h4>
-                <p className="text-sm text-gray-700">{result.security.aiAnalysis.explanation}</p>
+              <div className="bg-[#111111] p-6 rounded-lg border border-gray-800">
+                <h4 className="text-xs uppercase tracking-wider font-semibold text-gray-400 mb-4">AI Analysis</h4>
+                <p className="text-sm text-gray-300 leading-relaxed">{result.security.aiAnalysis.explanation}</p>
                 {result.security.aiAnalysis.safetyTips?.length > 0 && (
-                  <div className="mt-3">
-                    <p className="text-sm font-semibold text-purple-800 mb-1">Safety Tips:</p>
-                    <ul className="list-disc list-inside space-y-1 text-sm text-gray-700">
+                  <div className="mt-4 pt-4 border-t border-gray-800">
+                    <p className="text-xs uppercase tracking-wider text-gray-500 mb-3">Safety Tips</p>
+                    <ul className="space-y-2">
                       {result.security.aiAnalysis.safetyTips.map((tip, index) => (
-                        <li key={index}>{tip}</li>
+                        <li key={index} className="flex items-start gap-3 text-sm text-gray-400">
+                          <span className="text-white mt-1">•</span>
+                          <span>{tip}</span>
+                        </li>
                       ))}
                     </ul>
                   </div>
@@ -300,19 +308,19 @@ const QRScanner = () => {
 
             {/* Extracted URL */}
             {result.extractedURL && (
-              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                <h4 className="font-semibold text-gray-800 mb-2">🔗 Extracted URL</h4>
-                <p className="text-sm font-mono bg-white p-2 rounded break-all">
+              <div className="bg-black/30 p-6 rounded-lg border border-gray-800">
+                <h4 className="text-xs uppercase tracking-wider font-semibold text-gray-400 mb-3">Extracted URL</h4>
+                <p className="text-sm font-mono text-white bg-black/50 p-3 rounded border border-gray-800 break-all">
                   {result.extractedURL}
                 </p>
               </div>
             )}
 
             {/* Action Buttons */}
-            <div className="flex gap-3">
+            <div className="flex gap-3 pt-2">
               <button
                 onClick={handleReset}
-                className="flex-1 py-2 px-4 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold transition-colors"
+                className="flex-1 py-3 px-4 bg-white hover:bg-gray-200 text-black rounded-lg font-semibold transition-all active:scale-[0.98]"
               >
                 Scan Another QR Code
               </button>
@@ -321,14 +329,29 @@ const QRScanner = () => {
         )}
 
         {/* Info Box */}
-        <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <h4 className="font-semibold text-blue-800 mb-2">ℹ️ How it works</h4>
-          <ul className="text-sm text-gray-700 space-y-1 list-disc list-inside">
-            <li>Upload a QR code image (from SMS, advertisement, payment request, etc.)</li>
-            <li>System decodes the QR code and extracts URLs or UPI payment details</li>
-            <li>Analyzes for phishing patterns using multiple detection layers</li>
-            <li>Provides AI-powered explanation and safety recommendations</li>
-            <li>Works with UPI payments, regular URLs, and shortened links</li>
+        <div className="mt-8 p-6 bg-black/30 border border-gray-800 rounded-lg">
+          <h4 className="text-xs uppercase tracking-wider font-semibold text-gray-400 mb-3">How it works</h4>
+          <ul className="text-sm text-gray-400 space-y-2">
+            <li className="flex items-start gap-3">
+              <span className="text-white mt-0.5">•</span>
+              <span>Upload a QR code image (from SMS, advertisement, payment request, etc.)</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <span className="text-white mt-0.5">•</span>
+              <span>System decodes the QR code and extracts URLs or UPI payment details</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <span className="text-white mt-0.5">•</span>
+              <span>Analyzes for phishing patterns using multiple detection layers</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <span className="text-white mt-0.5">•</span>
+              <span>Provides AI-powered explanation and safety recommendations</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <span className="text-white mt-0.5">•</span>
+              <span>Works with UPI payments, regular URLs, and shortened links</span>
+            </li>
           </ul>
         </div>
       </div>

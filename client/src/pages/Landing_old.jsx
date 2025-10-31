@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FaShieldAlt, FaLink, FaQrcode, FaChartLine } from 'react-icons/fa';
+import { FaShieldAlt, FaLink, FaQrcode, FaChartLine, FaBolt, FaCheckCircle, FaRocket, FaGlobe, FaBrain, FaLock, FaEye, FaNetworkWired } from 'react-icons/fa';
 
 const Landing = () => {
   return (
@@ -78,6 +78,7 @@ const Landing = () => {
           </div>
         </motion.div>
 
+
         {/* Features Section */}
         <motion.div 
           initial={{ opacity: 0 }}
@@ -135,6 +136,7 @@ const Landing = () => {
           </div>
         </motion.div>
 
+
         {/* Security Layers */}
         <motion.div 
           initial={{ opacity: 0 }}
@@ -179,6 +181,8 @@ const Landing = () => {
             </div>
           </div>
         </motion.div>
+
+
 
         {/* CTA Section */}
         <motion.div 
@@ -237,6 +241,110 @@ const Landing = () => {
               <span>Real-time intelligence</span>
               <span>AI-powered</span>
             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Landing;
+        {/* CTA Section */}
+        <motion.div 
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          viewport={{ once: true }}
+          className="relative z-10 max-w-5xl mx-auto px-4 py-24"
+        >
+          <div className="relative bg-gradient-to-br from-blue-600 via-cyan-500 to-blue-700 rounded-[3rem] shadow-2xl overflow-hidden">
+            <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMtNi42MjcgMC0xMiA1LjM3My0xMiAxMnM1LjM3MyAxMiAxMiAxMiAxMi01LjM3MyAxMi0xMi01LjM3My0xMi0xMi0xMnoiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSIuNSIgb3BhY2l0eT0iLjEiLz48L2c+PC9zdmc+')] opacity-30"></div>
+            <div className="relative px-8 py-16 md:px-16 text-center">
+              <motion.h2 
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2, duration: 0.6 }}
+                viewport={{ once: true }}
+                className="text-4xl md:text-5xl font-bold text-white mb-6"
+              >
+                Deploy Enterprise Security
+              </motion.h2>
+              <motion.p 
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
+                transition={{ delay: 0.4, duration: 0.6 }}
+                viewport={{ once: true }}
+                className="text-xl text-blue-100 mb-10 max-w-2xl mx-auto leading-relaxed"
+              >
+                Start protecting your organization with advanced threat intelligence
+              </motion.p>
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6, duration: 0.6 }}
+                viewport={{ once: true }}
+                className="flex flex-col sm:flex-row gap-6 justify-center"
+              >
+                <Link to="/scanner">
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="px-10 py-5 bg-white text-blue-600 text-lg font-bold rounded-2xl shadow-lg hover:shadow-xl transition-all"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <FaRocket className="text-xl" />
+                      <span>Start Analysis</span>
+                    </div>
+                  </motion.button>
+                </Link>
+                <Link to="/analytics">
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="px-10 py-5 bg-transparent border-2 border-white text-white text-lg font-bold rounded-2xl hover:bg-white/10 transition-all"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <FaChartLine className="text-xl" />
+                      <span>View Dashboard</span>
+                    </div>
+                  </motion.button>
+                </Link>
+              </motion.div>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+
+      {/* Footer */}
+      <div className="relative z-10 bg-black/30 backdrop-blur-md border-t border-white/10 py-12">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col md:flex-row items-center justify-between">
+            <div className="flex items-center space-x-3 mb-6 md:mb-0">
+              <div className="bg-gradient-to-br from-blue-500 to-cyan-400 p-3 rounded-xl">
+                <FaShieldAlt className="text-2xl text-white" />
+              </div>
+              <div>
+                <div className="text-xl font-bold text-white">PhishGuard</div>
+                <div className="text-sm text-blue-200">Enterprise Security Platform</div>
+              </div>
+            </div>
+            <div className="flex items-center space-x-8 text-sm text-blue-200">
+              <div className="flex items-center space-x-2">
+                <FaLock className="text-cyan-400" />
+                <span>7-Layer Protection</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <FaEye className="text-cyan-400" />
+                <span>Real-Time Intelligence</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <FaBrain className="text-cyan-400" />
+                <span>AI-Powered</span>
+              </div>
+            </div>
+          </div>
+          <div className="mt-8 pt-8 border-t border-white/10 text-center text-sm text-blue-300">
+            <p>© 2025 PhishGuard. Advanced Threat Detection Platform.</p>
           </div>
         </div>
       </div>
