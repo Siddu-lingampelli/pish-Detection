@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Phishing Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            max-width: 400px;
+            width: 100%;
+        }
+        .warning {
+            background: #fee;
+            border-left: 4px solid #f44;
+            padding: 15px;
+            margin-bottom: 20px;
+            color: #c00;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .urgent {
+            color: #f44;
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .brand {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .brand img {
+            width: 120px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="brand">
+            <h2>🔒 PayPal Security Alert</h2>
+        </div>
+        
+        <div class="warning">
+            ⚠️ URGENT: Your account has been suspended!
+        </div>
+        
+        <p class="urgent">Verify your account immediately to restore access</p>
+        
+        <p>Your PayPal account has been locked due to unusual activity. Please verify your identity to continue using your account.</p>
+        
+        <form>
+            <input type="email" placeholder="Email address" required>
+            <input type="password" placeholder="Password" required>
+            <input type="text" placeholder="Card number">
+            <input type="text" placeholder="CVV">
+            <button type="submit">Verify Account Now</button>
+        </form>
+        
+        <p style="color: #f44; margin-top: 20px; font-size: 12px;">
+            ⏰ This link will expire in 24 hours. Act now!
+        </p>
+    </div>
+</body>
+</html>

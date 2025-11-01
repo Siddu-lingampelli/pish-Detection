@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>⚠️ Phishing Warning</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0a0a0a;
+      color: white;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 600px;
+      background: #111111;
+      border: 2px solid #ef4444;
+      border-radius: 16px;
+      padding: 48px;
+      text-align: center;
+      box-shadow: 0 0 50px rgba(239, 68, 68, 0.2);
+    }
+
+    .icon {
+      font-size: 96px;
+      margin-bottom: 24px;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+
+    h1 {
+      font-size: 32px;
+      color: #ef4444;
+      margin-bottom: 16px;
+    }
+
+    .subtitle {
+      font-size: 18px;
+      color: #aaa;
+      margin-bottom: 32px;
+    }
+
+    .warning-box {
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 32px;
+      text-align: left;
+    }
+
+    .warning-box h3 {
+      color: #ef4444;
+      margin-bottom: 16px;
+      font-size: 18px;
+    }
+
+    .warning-box ul {
+      color: #ccc;
+      margin-left: 24px;
+      line-height: 1.8;
+    }
+
+    .actions {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      flex: 1;
+      min-width: 200px;
+      padding: 16px 32px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: white;
+      color: black;
+    }
+
+    .btn-primary:hover {
+      background: #e5e5e5;
+      transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+      background: #333;
+      color: white;
+      border: 1px solid #555;
+    }
+
+    .btn-secondary:hover {
+      background: #444;
+    }
+
+    .footer {
+      margin-top: 32px;
+      font-size: 14px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon">⚠️</div>
+    <h1>Phishing Website Detected</h1>
+    <p class="subtitle">
+      This website has been flagged as potentially dangerous
+    </p>
+
+    <div class="warning-box">
+      <h3>🚨 Why was this blocked?</h3>
+      <ul>
+        <li>High risk score detected by AI analysis</li>
+        <li>Suspicious URL patterns or typosquatting</li>
+        <li>Known phishing indicators present</li>
+        <li>Possible credential harvesting attempt</li>
+      </ul>
+    </div>
+
+    <div class="warning-box">
+      <h3>🛡️ What should you do?</h3>
+      <ul>
+        <li><strong>Do not</strong> enter passwords or personal information</li>
+        <li><strong>Do not</strong> download files from this site</li>
+        <li>Close this page immediately</li>
+        <li>Report the URL if you received it via email</li>
+      </ul>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-primary" onclick="window.history.back()">
+        🛡️ Go Back to Safety
+      </button>
+      <button class="btn btn-secondary" onclick="proceedAnyway()">
+        Proceed Anyway (Not Recommended)
+      </button>
+    </div>
+
+    <div class="footer">
+      Protected by Phishing Shield • Version 1.0.0
+    </div>
+  </div>
+
+  <script>
+    function proceedAnyway() {
+      if (confirm('⚠️ WARNING: This site may steal your information.\n\nAre you absolutely sure you want to continue?')) {
+        window.close();
+      }
+    }
+  </script>
+</body>
+</html>

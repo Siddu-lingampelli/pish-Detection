@@ -1,0 +1,4 @@
+/* Content script styles */
+#phishing-shield-indicator {
+  transition: opacity 0.3s ease;
+}

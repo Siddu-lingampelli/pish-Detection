@@ -59,6 +59,26 @@ const Landing = () => {
                 Scan QR code
               </motion.button>
             </Link>
+
+            <Link to="/login">
+              <motion.button
+                whileHover={{ borderColor: '#ffffff' }}
+                whileTap={{ scale: 0.98 }}
+                className="px-8 py-4 bg-transparent border-2 border-gray-700 text-white text-base font-medium rounded-lg transition-colors"
+              >
+                Login
+              </motion.button>
+            </Link>
+
+            <Link to="/register">
+              <motion.button
+                whileHover={{ borderColor: '#ffffff', backgroundColor: 'rgba(255,255,255,0.05)' }}
+                whileTap={{ scale: 0.98 }}
+                className="px-8 py-4 bg-transparent border-2 border-gray-700 text-white text-base font-medium rounded-lg transition-colors"
+              >
+                Sign Up
+              </motion.button>
+            </Link>
           </div>
 
           {/* Stats */}
@@ -101,6 +121,10 @@ const Landing = () => {
                 {
                   title: "Neural intelligence",
                   desc: "Advanced AI providing natural language threat explanations and actionable security insights."
+                },
+                {
+                  title: "AI Screenshot analysis",
+                  desc: "Computer vision powered fake login page detection with OCR text extraction and visual pattern recognition."
                 },
                 {
                   title: "QR code intelligence",

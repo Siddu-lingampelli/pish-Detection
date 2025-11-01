@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="48" height="48" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+  <!-- Black background -->
+  <rect width="48" height="48" fill="#000000"/>
+  
+  <!-- Shield outline -->
+  <path d="M 24 7.199999999999999 L 38.400000000000006 14.399999999999999 L 38.400000000000006 28.799999999999997 Q 38.400000000000006 36 24 40.8 Q 9.600000000000001 36 9.600000000000001 28.799999999999997 L 9.600000000000001 14.399999999999999 Z" 
+        fill="none" stroke="#FFFFFF" stroke-width="3.84"/>
+  
+  <!-- Checkmark inside shield -->
+  <path d="M 16.799999999999997 24 L 21.6 28.799999999999997 L 31.200000000000003 16.799999999999997" 
+        fill="none" stroke="#FFFFFF" stroke-width="2.88" stroke-linecap="round"/>
+</svg>

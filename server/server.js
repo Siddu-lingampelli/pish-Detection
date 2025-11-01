@@ -4,6 +4,10 @@ import dotenv from 'dotenv';
 import connectDB from './config/db.js';
 import scanRoutes from './routes/scanRoutes.js';
 import qrRoutes from './routes/qrRoutes.js';
+import screenshotRoutes from './routes/screenshotRoutes.js';
+import aiAssistantRoutes from './routes/aiAssistantRoutes.js';
+import emailRoutes from './routes/emailRoutes.js';
+import authRoutes from './routes/authRoutes.js';
 
 // Load environment variables
 dotenv.config();
@@ -25,6 +29,10 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 app.use('/api', scanRoutes);
 app.use('/api/qr', qrRoutes);
+app.use('/api/screenshot', screenshotRoutes);
+app.use('/api/ai-assistant', aiAssistantRoutes);
+app.use('/api/email', emailRoutes);
+app.use('/api/auth', authRoutes);
 
 // Health check route
 app.get('/health', (req, res) => {
