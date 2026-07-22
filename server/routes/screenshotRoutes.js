@@ -6,15 +6,15 @@ const router = express.Router();
 
 // Configure multer for file uploads
 const storage = multer.memoryStorage();
+const ALLOWED_MIMES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 const upload = multer({
   storage: storage,
   limits: {
     fileSize: 10 * 1024 * 1024 // 10MB limit
   },
   fileFilter: (req, file, cb) => {
-    // Accept images only
-    if (!file.mimetype.startsWith('image/')) {
-      return cb(new Error('Only image files are allowed'), false);
+    if (!ALLOWED_MIMES.includes(file.mimetype)) {
+      return cb(new Error('Only image files (JPEG, PNG, GIF, WebP) are allowed'), false);
     }
     cb(null, true);
   }
@@ -61,7 +61,7 @@ router.post('/analyze', upload.single('screenshot'), async (req, res) => {
     console.error('Screenshot analysis route error:', error);
     res.status(500).json({
       success: false,
-      error: error.message || 'Failed to analyze screenshot'
+      error: 'Failed to analyze screenshot'
     });
   }
 });

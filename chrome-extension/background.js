@@ -1,5 +1,10 @@
 // Background service worker for Chrome Extension
-const API_URL = 'http://localhost:5000/api';
+let API_URL = 'http://localhost:5000/api';
+
+// Load config
+chrome.storage.local.get(['apiUrl'], (result) => {
+  if (result.apiUrl) API_URL = result.apiUrl.replace(/\/+$/, '') + '/api';
+});
 
 // Listen for tab updates (when user navigates to new page)
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
@@ -79,12 +84,16 @@ function updateBadge(tabId, riskScore) {
 
 // Function to inject warning overlay (runs in page context)
 function showWarningOverlay(riskScore, threats) {
-  // Check if overlay already exists
   if (document.getElementById('phishing-shield-overlay')) {
     return;
   }
 
-  // Create overlay
+  function esc(s) {
+    const d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
   const overlay = document.createElement('div');
   overlay.id = 'phishing-shield-overlay';
   overlay.style.cssText = `
@@ -100,6 +109,10 @@ function showWarningOverlay(riskScore, threats) {
     justify-content: center;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   `;
+
+  const threatItems = threats.length
+    ? threats.map(t => `<li>${esc(t)}</li>`).join('')
+    : '<li>Suspicious activity detected</li>';
 
   overlay.innerHTML = `
     <div style="
@@ -121,7 +134,7 @@ function showWarningOverlay(riskScore, threats) {
       <div style="background: #1a1a1a; padding: 16px; border-radius: 8px; margin-bottom: 24px; text-align: left;">
         <strong style="color: #ef4444;">⚠️ Detected Threats:</strong>
         <ul style="margin: 12px 0 0 24px; color: #ccc;">
-          ${threats.map(t => `<li>${t}</li>`).join('') || '<li>Suspicious activity detected</li>'}
+          ${threatItems}
         </ul>
       </div>
       <div style="display: flex; gap: 12px;">

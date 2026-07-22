@@ -73,7 +73,7 @@ class URLScanService {
 
             return {
                 success: false,
-                error: error.response?.data?.message || error.message
+                error: 'Failed to submit URL for scanning'
             };
         }
     }
@@ -168,7 +168,7 @@ class URLScanService {
             console.error('❌ URLScan.io results error:', error.message);
             return {
                 success: false,
-                error: error.message
+                error: 'Failed to retrieve scan results'
             };
         }
     }

@@ -154,7 +154,7 @@ class ScreenshotAnalysisService {
       console.error('❌ Screenshot analysis error:', error);
       return {
         success: false,
-        error: error.message,
+        error: 'Screenshot analysis failed',
         duration: Date.now() - startTime
       };
     }

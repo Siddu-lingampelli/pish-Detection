@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { FiMail, FiAlertTriangle, FiCheckCircle, FiXCircle } from 'react-icons/fi';
 import { BsShieldCheck } from 'react-icons/bs';
-import axios from 'axios';
+import { analyzeEmail } from '../services/api';
 
 const EmailScanner = () => {
   const [emailContent, setEmailContent] = useState('');
@@ -20,13 +20,13 @@ const EmailScanner = () => {
     setResults(null);
 
     try {
-      const response = await axios.post('http://localhost:5000/api/email/analyze', {
+      const response = await analyzeEmail({
         emailContent,
         senderEmail,
         subject
       });
 
-      setResults(response.data);
+      setResults(response);
     } catch (error) {
       console.error('Email analysis error:', error);
       alert('Failed to analyze email. Please try again.');

@@ -16,6 +16,15 @@ router.post('/analyze', async (req, res) => {
         error: 'Email content is required'
       });
     }
+    if (emailContent.length > 100000) {
+      return res.status(400).json({ error: 'Email content too large' });
+    }
+    if (senderEmail && typeof senderEmail !== 'string') {
+      return res.status(400).json({ error: 'Invalid sender email' });
+    }
+    if (subject && typeof subject !== 'string') {
+      return res.status(400).json({ error: 'Invalid subject' });
+    }
 
     console.log(`📧 Analyzing email (${emailContent.length} characters)`);
 
@@ -34,8 +43,7 @@ router.post('/analyze', async (req, res) => {
   } catch (error) {
     console.error('❌ Email analysis error:', error);
     res.status(500).json({
-      error: 'Failed to analyze email',
-      details: error.message
+      error: 'Failed to analyze email'
     });
   }
 });

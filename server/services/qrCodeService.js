@@ -160,7 +160,11 @@ class QRCodeService {
             if (queryString) {
                 queryString.split('&').forEach(param => {
                     const [key, value] = param.split('=');
-                    params[key] = decodeURIComponent(value);
+                    try {
+                        params[key] = value ? decodeURIComponent(value) : '';
+                    } catch {
+                        params[key] = value || '';
+                    }
                 });
             }
             

@@ -1,43 +1,50 @@
 import express from 'express';
-import URLScan from '../models/URLScan.js';
 import phishingDetectionService from '../services/phishingDetectionService.js';
 import mistralExplanationService from '../services/mistralExplanationService.js';
 import urlscanService from '../services/urlscanService.js';
 
 const router = express.Router();
 
-/**
- * POST /api/scan
- * Scan a URL for phishing detection
- */
+const scans = [];
+const BLOCKED_HOSTS = ['127.0.0.1', 'localhost', '0.0.0.0', '::1', '[::1]', '10.', '172.16.', '192.168.', '169.254.'];
+
+function isBlockedHost(hostname) {
+  return BLOCKED_HOSTS.some(b => hostname.startsWith(b));
+}
+
+function genId() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+}
+
 router.post('/scan', async (req, res) => {
   try {
     const { url } = req.body;
 
-    // Validate input
-    if (!url) {
-      return res.status(400).json({
-        success: false,
-        message: 'URL is required'
-      });
+    if (typeof url !== 'string') {
+      return res.status(400).json({ success: false, message: 'URL is required' });
     }
 
-    // Trim and validate URL
     const cleanUrl = url.trim();
-    
-    if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
-      return res.status(400).json({
-        success: false,
-        message: 'URL must start with http:// or https://'
-      });
+    if (cleanUrl.length > 2048) {
+      return res.status(400).json({ success: false, message: 'URL too long' });
     }
 
-    console.log(`🔍 Scanning URL: ${cleanUrl}`);
+    if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
+      return res.status(400).json({ success: false, message: 'URL must start with http:// or https://' });
+    }
 
-    // Run phishing detection
+    let parsedUrl;
+    try {
+      parsedUrl = new URL(cleanUrl);
+      if (isBlockedHost(parsedUrl.hostname)) {
+        return res.status(400).json({ success: false, message: 'Cannot scan internal addresses' });
+      }
+    } catch {
+      return res.status(400).json({ success: false, message: 'Invalid URL' });
+    }
+
     const detectionResult = await phishingDetectionService.detectPhishing(cleanUrl);
 
-    // Generate AI explanation (async, doesn't block response)
     let aiExplanation = null;
     try {
       const explanationData = await mistralExplanationService.generateExplanation(cleanUrl, detectionResult);
@@ -48,278 +55,145 @@ router.post('/scan', async (req, res) => {
       };
     } catch (error) {
       console.error('AI explanation error:', error.message);
-      // Continue without explanation
     }
 
-    // Save to database
-    const urlScan = new URLScan({
+    const record = {
+      _id: genId(),
       url: cleanUrl,
       result: detectionResult.result,
       confidence_score: detectionResult.confidence_score,
       meta_data: detectionResult.meta_data,
-      scan_duration: detectionResult.scan_duration
-    });
+      scan_duration: detectionResult.scan_duration,
+      created_at: new Date()
+    };
+    scans.unshift(record);
 
-    await urlScan.save();
-
-    console.log(`✅ Scan complete: ${detectionResult.result} (${(detectionResult.confidence_score * 100).toFixed(1)}%)`);
-
-    // Return result
     res.status(200).json({
       success: true,
       message: 'URL scanned successfully',
-      data: {
-        _id: urlScan._id,
-        url: urlScan.url,
-        result: urlScan.result,
-        confidence_score: urlScan.confidence_score,
-        meta_data: urlScan.meta_data,
-        scan_duration: urlScan.scan_duration,
-        created_at: urlScan.created_at,
-        ai_explanation: aiExplanation
-      }
+      data: { ...record, ai_explanation: aiExplanation }
     });
 
   } catch (error) {
     console.error('Scan error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error scanning URL',
-      error: error.message
-    });
+    res.status(500).json({ success: false, message: 'Error scanning URL' });
   }
 });
 
-/**
- * GET /api/urlscan/:scanId
- * Get URLScan.io results for a specific scan
- */
 router.get('/urlscan/:scanId', async (req, res) => {
   try {
     const { scanId } = req.params;
-
-    console.log(`📊 Retrieving URLScan.io results for: ${scanId}`);
+    if (typeof scanId !== 'string' || scanId.length > 256) {
+      return res.status(400).json({ success: false, message: 'Invalid scan ID' });
+    }
 
     const results = await urlscanService.getResults(scanId);
 
     if (!results.success) {
       return res.status(results.pending ? 202 : 404).json({
-        success: false,
-        message: results.error,
-        pending: results.pending || false
+        success: false, message: results.error, pending: results.pending || false
       });
     }
 
-    res.status(200).json({
-      success: true,
-      message: 'URLScan.io results retrieved successfully',
-      data: results
-    });
+    res.status(200).json({ success: true, message: 'URLScan.io results retrieved successfully', data: results });
 
   } catch (error) {
     console.error('URLScan results error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error retrieving URLScan.io results',
-      error: error.message
-    });
+    res.status(500).json({ success: false, message: 'Error retrieving URLScan.io results' });
   }
 });
 
-/**
- * GET /api/history
- * Get all previous scans
- */
-router.get('/history', async (req, res) => {
+router.get('/history', (req, res) => {
   try {
     const { limit = 50, page = 1, result } = req.query;
+    const pageNum = Math.max(1, parseInt(page) || 1);
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 50));
 
-    // Build query
-    const query = {};
+    let filtered = scans;
     if (result && ['Legit', 'Suspicious', 'Phishing'].includes(result)) {
-      query.result = result;
+      filtered = scans.filter(s => s.result === result);
     }
 
-    // Calculate pagination
-    const skip = (parseInt(page) - 1) * parseInt(limit);
-
-    // Get scans with pagination
-    const scans = await URLScan.find(query)
-      .sort({ created_at: -1 })
-      .limit(parseInt(limit))
-      .skip(skip)
-      .select('-__v');
-
-    // Get total count
-    const totalCount = await URLScan.countDocuments(query);
+    const total = filtered.length;
+    const paged = filtered.slice((pageNum - 1) * limitNum, pageNum * limitNum);
 
     res.status(200).json({
-      success: true,
-      message: 'Scan history retrieved successfully',
+      success: true, message: 'Scan history retrieved successfully',
       data: {
-        scans,
-        pagination: {
-          total: totalCount,
-          page: parseInt(page),
-          limit: parseInt(limit),
-          pages: Math.ceil(totalCount / parseInt(limit))
-        }
+        scans: paged,
+        pagination: { total, page: pageNum, limit: limitNum, pages: Math.ceil(total / limitNum) || 1 }
       }
     });
 
   } catch (error) {
     console.error('History error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error retrieving scan history',
-      error: error.message
-    });
+    res.status(500).json({ success: false, message: 'Error retrieving scan history' });
   }
 });
 
-/**
- * GET /api/stats
- * Get analytics and statistics
- */
-router.get('/stats', async (req, res) => {
+router.get('/stats', (req, res) => {
   try {
-    // Get total scans
-    const totalScans = await URLScan.countDocuments();
+    const totalScans = scans.length;
+    const legit = scans.filter(s => s.result === 'Legit').length;
+    const suspicious = scans.filter(s => s.result === 'Suspicious').length;
+    const phishing = scans.filter(s => s.result === 'Phishing').length;
 
-    // Get counts by result type
-    const legitCount = await URLScan.countDocuments({ result: 'Legit' });
-    const suspiciousCount = await URLScan.countDocuments({ result: 'Suspicious' });
-    const phishingCount = await URLScan.countDocuments({ result: 'Phishing' });
-
-    // Calculate percentages
     const percentages = {
-      legit: totalScans > 0 ? ((legitCount / totalScans) * 100).toFixed(2) : 0,
-      suspicious: totalScans > 0 ? ((suspiciousCount / totalScans) * 100).toFixed(2) : 0,
-      phishing: totalScans > 0 ? ((phishingCount / totalScans) * 100).toFixed(2) : 0
+      legit: totalScans > 0 ? +((legit / totalScans) * 100).toFixed(2) : 0,
+      suspicious: totalScans > 0 ? +((suspicious / totalScans) * 100).toFixed(2) : 0,
+      phishing: totalScans > 0 ? +((phishing / totalScans) * 100).toFixed(2) : 0
     };
 
-    // Get recent scans (last 7 days)
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-    const recentScans = await URLScan.countDocuments({
-      created_at: { $gte: sevenDaysAgo }
-    });
+    const sevenDaysAgo = new Date(Date.now() - 7 * 86400000);
+    const recentScans = scans.filter(s => new Date(s.created_at) >= sevenDaysAgo).length;
 
-    // Get average scan duration
-    const avgScanResult = await URLScan.aggregate([
-      {
-        $group: {
-          _id: null,
-          avgDuration: { $avg: '$scan_duration' }
-        }
-      }
-    ]);
-
-    const avgScanDuration = avgScanResult.length > 0 
-      ? avgScanResult[0].avgDuration.toFixed(2) 
+    const avgScanDuration = totalScans > 0
+      ? +(scans.reduce((a, s) => a + s.scan_duration, 0) / totalScans).toFixed(2)
       : 0;
 
-    // Get most common risk factors
-    const riskFactorsResult = await URLScan.aggregate([
-      { $unwind: '$meta_data.risk_factors' },
-      { 
-        $group: { 
-          _id: '$meta_data.risk_factors', 
-          count: { $sum: 1 } 
-        } 
-      },
-      { $sort: { count: -1 } },
-      { $limit: 5 }
-    ]);
+    const riskFactorCount = {};
+    scans.forEach(s => (s.meta_data?.risk_factors || []).forEach(f => { riskFactorCount[f] = (riskFactorCount[f] || 0) + 1; }));
+    const topRiskFactors = Object.entries(riskFactorCount)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([factor, count]) => ({ factor, count }));
 
     res.status(200).json({
-      success: true,
-      message: 'Statistics retrieved successfully',
-      data: {
-        totalScans,
-        counts: {
-          legit: legitCount,
-          suspicious: suspiciousCount,
-          phishing: phishingCount
-        },
-        percentages,
-        recentScans: {
-          last7Days: recentScans
-        },
-        avgScanDuration: parseFloat(avgScanDuration),
-        topRiskFactors: riskFactorsResult.map(item => ({
-          factor: item._id,
-          count: item.count
-        }))
-      }
+      success: true, message: 'Statistics retrieved successfully',
+      data: { totalScans, counts: { legit, suspicious, phishing }, percentages, recentScans: { last7Days: recentScans }, avgScanDuration, topRiskFactors }
     });
 
   } catch (error) {
     console.error('Stats error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error retrieving statistics',
-      error: error.message
-    });
+    res.status(500).json({ success: false, message: 'Error retrieving statistics' });
   }
 });
 
-/**
- * DELETE /api/history/:id
- * Delete a specific scan record
- */
-router.delete('/history/:id', async (req, res) => {
+router.delete('/history/:id', (req, res) => {
   try {
     const { id } = req.params;
-
-    const deletedScan = await URLScan.findByIdAndDelete(id);
-
-    if (!deletedScan) {
-      return res.status(404).json({
-        success: false,
-        message: 'Scan record not found'
-      });
+    const idx = scans.findIndex(s => s._id === id);
+    if (idx === -1) {
+      return res.status(404).json({ success: false, message: 'Scan record not found' });
     }
-
-    res.status(200).json({
-      success: true,
-      message: 'Scan record deleted successfully',
-      data: deletedScan
-    });
+    const deleted = scans.splice(idx, 1)[0];
+    res.status(200).json({ success: true, message: 'Scan record deleted successfully', data: deleted });
 
   } catch (error) {
     console.error('Delete error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error deleting scan record',
-      error: error.message
-    });
+    res.status(500).json({ success: false, message: 'Error deleting scan record' });
   }
 });
 
-/**
- * DELETE /api/history
- * Clear all scan history
- */
-router.delete('/history', async (req, res) => {
+router.delete('/history', (req, res) => {
   try {
-    const result = await URLScan.deleteMany({});
-
-    res.status(200).json({
-      success: true,
-      message: 'All scan history cleared successfully',
-      data: {
-        deletedCount: result.deletedCount
-      }
-    });
+    const deletedCount = scans.length;
+    scans.length = 0;
+    res.status(200).json({ success: true, message: 'All scan history cleared successfully', data: { deletedCount } });
 
   } catch (error) {
     console.error('Clear history error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error clearing scan history',
-      error: error.message
-    });
+    res.status(500).json({ success: false, message: 'Error clearing scan history' });
   }
 });
 

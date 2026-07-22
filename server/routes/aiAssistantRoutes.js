@@ -29,9 +29,8 @@ router.post('/chat', async (req, res) => {
 
   } catch (error) {
     console.error('❌ AI Assistant error:', error.message);
-    res.status(500).json({ 
-      error: 'Failed to process your question. Please try again.',
-      details: error.message 
+    res.status(500).json({
+      error: 'Failed to process your question. Please try again.'
     });
   }
 });

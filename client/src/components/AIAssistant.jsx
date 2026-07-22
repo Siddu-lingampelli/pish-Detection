@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { FiSend, FiX, FiMessageCircle } from 'react-icons/fi';
 import { BsRobot } from 'react-icons/bs';
-import axios from 'axios';
+import { aiChat } from '../services/api';
 
 const AIAssistant = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -47,17 +47,14 @@ const AIAssistant = () => {
 
     try {
       console.log('📤 Sending message to AI:', currentInput);
-      
-      const response = await axios.post('http://localhost:5000/api/ai-assistant/chat', {
-        message: currentInput,
-        conversationHistory: messages.slice(-6) // Last 3 exchanges for context
-      });
 
-      console.log('✅ AI Response received:', response.data);
+      const response = await aiChat(currentInput, messages.slice(-6));
+
+      console.log('✅ AI Response received:', response);
 
       const assistantMessage = {
         role: 'assistant',
-        content: response.data.reply,
+        content: response.reply,
         timestamp: new Date()
       };
 
@@ -65,7 +62,7 @@ const AIAssistant = () => {
     } catch (error) {
       console.error('❌ AI Assistant error:', error);
       console.error('Error details:', error.response?.data || error.message);
-      
+
       const errorMessage = {
         role: 'assistant',
         content: error.response?.data?.error || '⚠️ Sorry, I encountered an error. Please try again or check your connection.',

@@ -10,9 +10,12 @@ const api = axios.create({
   timeout: 30000,
 });
 
-// Request interceptor
 api.interceptors.request.use(
   (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
     return config;
   },
   (error) => {
@@ -20,7 +23,6 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor
 api.interceptors.response.use(
   (response) => {
     return response;
@@ -57,6 +59,49 @@ export const deleteScan = async (id) => {
 
 export const clearHistory = async () => {
   const response = await api.delete('/history');
+  return response.data;
+};
+
+export const login = async (credentials) => {
+  const response = await api.post('/auth/login', credentials);
+  return response.data;
+};
+
+export const register = async (userData) => {
+  const response = await api.post('/auth/register', userData);
+  return response.data;
+};
+
+export const getMe = async () => {
+  const response = await api.get('/auth/me');
+  return response.data;
+};
+
+export const scanQR = async (file) => {
+  const form = new FormData();
+  form.append('qrImage', file);
+  const response = await api.post('/qr/scan', form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return response.data;
+};
+
+export const analyzeScreenshot = async (file) => {
+  const form = new FormData();
+  form.append('screenshot', file);
+  const response = await api.post('/screenshot/analyze', form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return response.data;
+};
+
+export const analyzeEmail = async (data) => {
+  const response = await api.post('/email/analyze', data);
+  return response.data;
+};
+
+export const aiChat = async (message, conversationHistory = []) => {
+  const response = await api.post('/ai-assistant/chat', { message, conversationHistory });
   return response.data;
 };
 

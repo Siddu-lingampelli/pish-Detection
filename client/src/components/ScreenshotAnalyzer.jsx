@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { FaImage, FaUpload, FaCamera, FaTimes, FaCheckCircle, FaExclamationTriangle, FaTimesCircle, FaSpinner } from 'react-icons/fa';
-import axios from 'axios';
+import { analyzeScreenshot } from '../services/api';
 
 const ScreenshotAnalyzer = () => {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -51,19 +51,12 @@ const ScreenshotAnalyzer = () => {
     setError(null);
 
     try {
-      const formData = new FormData();
-      formData.append('screenshot', selectedFile);
-
       console.log('📤 Uploading screenshot for analysis...');
-      
-      const response = await axios.post('http://localhost:5000/api/screenshot/analyze', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
 
-      console.log('✅ Screenshot analysis response:', response.data);
-      setResult(response.data.data);
+      const response = await analyzeScreenshot(selectedFile);
+
+      console.log('✅ Screenshot analysis response:', response);
+      setResult(response.data);
 
     } catch (err) {
       console.error('❌ Screenshot analysis error:', err);

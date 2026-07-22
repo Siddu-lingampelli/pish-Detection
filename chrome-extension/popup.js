@@ -1,5 +1,11 @@
 // API Configuration
-const API_URL = 'http://localhost:5000/api';
+let API_URL = 'http://localhost:5000/api';
+let WEB_APP_URL = 'http://localhost:3000';
+
+chrome.storage.local.get(['apiUrl', 'webAppUrl'], (result) => {
+  if (result.apiUrl) API_URL = result.apiUrl.replace(/\/+$/, '') + '/api';
+  if (result.webAppUrl) WEB_APP_URL = result.webAppUrl;
+});
 
 // Get current tab URL and scan it
 document.addEventListener('DOMContentLoaded', async () => {
@@ -172,6 +178,6 @@ document.getElementById('scanAgain').addEventListener('click', async () => {
 document.getElementById('viewDetails').addEventListener('click', () => {
   // Open your web app with the scan results
   chrome.tabs.create({
-    url: 'http://localhost:3000/scanner'
+    url: `${WEB_APP_URL}/scanner`
   });
 });

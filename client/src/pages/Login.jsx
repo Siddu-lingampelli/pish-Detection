@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FiMail, FiLock } from 'react-icons/fi';
-import axios from 'axios';
+import { login } from '../services/api';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -32,7 +32,7 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/login', formData);
+      const response = await login(formData);
 
       // Save token and user info
       localStorage.setItem('token', response.data.token);

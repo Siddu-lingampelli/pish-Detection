@@ -149,7 +149,7 @@ class PhishingDetectionService {
         result: 'Suspicious',
         confidence_score: 0.5,
         meta_data: {
-          risk_factors: ['Analysis error: ' + error.message],
+          risk_factors: ['Analysis error'],
           has_ssl: false
         },
         scan_duration: Date.now() - startTime
@@ -394,7 +394,7 @@ class PhishingDetectionService {
       const apiKey = process.env.VIRUSTOTAL_API_KEY;
       
       // VirusTotal v3 API - URL scan
-      const urlId = Buffer.from(url).toString('base64').replace(/=/g, '');
+      const urlId = Buffer.from(url).toString('base64url').replace(/=+$/, '');
       const apiUrl = `https://www.virustotal.com/api/v3/urls/${urlId}`;
 
       const response = await axios.get(apiUrl, {

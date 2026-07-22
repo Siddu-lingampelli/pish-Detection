@@ -8,15 +8,15 @@ const router = express.Router();
 
 // Configure multer for memory storage
 const storage = multer.memoryStorage();
+const ALLOWED_MIMES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 const upload = multer({
     storage: storage,
     limits: {
         fileSize: 10 * 1024 * 1024, // 10MB max file size
     },
     fileFilter: (req, file, cb) => {
-        // Accept images only
-        if (!file.mimetype.startsWith('image/')) {
-            return cb(new Error('Only image files are allowed!'), false);
+        if (!ALLOWED_MIMES.includes(file.mimetype)) {
+            return cb(new Error('Only image files (JPEG, PNG, GIF, WebP) are allowed'), false);
         }
         cb(null, true);
     }
@@ -105,10 +105,9 @@ router.post('/scan', upload.single('qrImage'), async (req, res) => {
 
     } catch (error) {
         console.error('❌ QR scan error:', error.message);
-        console.error('   Stack:', error.stack);
         res.status(500).json({
             success: false,
-            error: error.message || 'Failed to process QR code'
+            error: 'Failed to process QR code'
         });
     }
 });

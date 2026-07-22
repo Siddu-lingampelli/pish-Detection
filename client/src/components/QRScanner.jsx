@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { FaQrcode, FaUpload, FaCamera, FaTimes, FaCheckCircle, FaExclamationTriangle, FaTimesCircle } from 'react-icons/fa';
-import axios from 'axios';
+import { scanQR } from '../services/api';
 
 const QRScanner = () => {
   const [selectedFile, setSelectedFile] = useState(null);
@@ -51,19 +51,12 @@ const QRScanner = () => {
     setError(null);
 
     try {
-      const formData = new FormData();
-      formData.append('qrImage', selectedFile);
-
       console.log('📤 Uploading QR code image...');
-      
-      const response = await axios.post('http://localhost:5000/api/qr/scan', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
 
-      console.log('✅ QR scan response:', response.data);
-      setResult(response.data);
+      const response = await scanQR(selectedFile);
+
+      console.log('✅ QR scan response:', response);
+      setResult(response);
 
     } catch (err) {
       console.error('❌ QR scan error:', err);
