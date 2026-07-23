@@ -46,9 +46,9 @@ router.post('/chat', async (req, res) => {
  * Health check endpoint
  */
 router.get('/test', (req, res) => {
-  res.json({ 
+  res.json({
     status: 'AI Assistant is ready',
-    powered_by: 'Mistral AI'
+    powered_by: 'Cerebras AI (gpt-oss-120b)'
   });
 });
 

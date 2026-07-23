@@ -13,8 +13,7 @@
 
 After deploy, dashboard → your service → **Environment** → add:
 
-- `MISTRAL_API_KEY` — https://console.mistral.ai/
-- `OPENROUTER_API_KEY` — https://openrouter.ai/keys
+- `CEREBRAS_API_KEY` — https://cloud.cerebras.ai/ (free tier; powers all AI features using gpt-oss-120b + gemma-4-31b)
 - `GOOGLE_SAFE_BROWSING_API_KEY` — Google Cloud Console
 - `VIRUSTOTAL_API_KEY` — https://www.virustotal.com/
 - `URLSCAN_API_KEY` — https://urlscan.io/user/profile

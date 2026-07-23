@@ -61,7 +61,7 @@ router.post('/analyze', async (req, res) => {
 router.get('/test', (req, res) => {
   res.json({
     status: 'Email analysis service is ready',
-    powered_by: 'GPT-4o AI'
+    powered_by: 'Cerebras AI (gpt-oss-120b)'
   });
 });
 

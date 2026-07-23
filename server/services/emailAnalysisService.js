@@ -1,15 +1,8 @@
-import axios from 'axios';
+import cerebrasService from './cerebrasService.js';
 
 class EmailAnalysisService {
-  constructor() {
-    this.openRouterApiKey = process.env.OPENROUTER_API_KEY;
-    this.openRouterUrl = 'https://openrouter.ai/api/v1/chat/completions';
-    this.model = 'openai/gpt-4o';
-  }
+  constructor() {}
 
-  /**
-   * Analyze email for phishing indicators
-   */
   async analyzeEmail(emailContent, senderEmail = '', subject = '') {
     try {
       if (typeof emailContent !== 'string') {
@@ -25,20 +18,14 @@ class EmailAnalysisService {
         aiAnalysis: ''
       };
 
-      // Step 1: Extract links
       analysisResults.linksFound = this.extractLinks(emailContent);
-
-      // Step 2: Detect suspicious keywords
       analysisResults.suspiciousKeywords = this.detectSuspiciousKeywords(emailContent, subject);
-
-      // Step 3: Analyze sender email
       const senderRisk = this.analyzeSender(senderEmail);
       if (senderRisk.isSuspicious) {
         analysisResults.threats.push(...senderRisk.reasons);
       }
 
-      // Step 4: Use GPT-4o for advanced analysis
-      if (this.openRouterApiKey) {
+      if (cerebrasService.isEnabled()) {
         const aiResult = await this.analyzeWithAI(emailContent, senderEmail, subject);
         if (aiResult) {
           analysisResults.aiAnalysis = aiResult.analysis;
@@ -47,7 +34,6 @@ class EmailAnalysisService {
         }
       }
 
-      // Step 5: Calculate base risk score
       let baseScore = 0;
       baseScore += analysisResults.suspiciousKeywords.length * 5;
       baseScore += analysisResults.linksFound.length > 3 ? 15 : 0;
@@ -55,7 +41,6 @@ class EmailAnalysisService {
 
       analysisResults.riskScore = Math.min(Math.max(analysisResults.riskScore, baseScore), 100);
 
-      // Determine risk level
       if (analysisResults.riskScore >= 70) {
         analysisResults.riskLevel = 'HIGH';
       } else if (analysisResults.riskScore >= 40) {
@@ -64,29 +49,20 @@ class EmailAnalysisService {
         analysisResults.riskLevel = 'LOW';
       }
 
-      // Generate recommendations
       analysisResults.recommendations = this.generateRecommendations(analysisResults);
-
       return analysisResults;
-
     } catch (error) {
       console.error('Email analysis error:', error);
       throw error;
     }
   }
 
-  /**
-   * Extract URLs from email content
-   */
   extractLinks(text) {
     const urlRegex = /(https?:\/\/[^\s]+)/g;
     const matches = text.match(urlRegex) || [];
-    return [...new Set(matches)]; // Remove duplicates
+    return [...new Set(matches)];
   }
 
-  /**
-   * Detect suspicious phishing keywords
-   */
   detectSuspiciousKeywords(emailContent, subject) {
     const suspiciousPatterns = [
       'verify your account', 'confirm your identity', 'suspended account',
@@ -100,46 +76,27 @@ class EmailAnalysisService {
 
     const found = [];
     const fullText = `${subject} ${emailContent}`.toLowerCase();
-
-    suspiciousPatterns.forEach(pattern => {
-      if (fullText.includes(pattern)) {
-        found.push(pattern);
-      }
-    });
-
+    suspiciousPatterns.forEach(p => { if (fullText.includes(p)) found.push(p); });
     return found;
   }
 
-  /**
-   * Analyze sender email address
-   */
   analyzeSender(senderEmail) {
-    const result = {
-      isSuspicious: false,
-      reasons: []
-    };
-
+    const result = { isSuspicious: false, reasons: [] };
     if (!senderEmail) return result;
 
     const email = senderEmail.toLowerCase();
-
-    // Check for suspicious patterns
     if (email.includes('noreply') && email.includes('paypal')) {
       result.isSuspicious = true;
       result.reasons.push('Suspicious sender: Mimics PayPal noreply address');
     }
-
     if (/\d{4,}/.test(email.split('@')[0] || '')) {
       result.isSuspicious = true;
       result.reasons.push('Sender email contains excessive numbers');
     }
-
     if (email.split('@')[0]?.length > 25) {
       result.isSuspicious = true;
       result.reasons.push('Unusually long email address');
     }
-
-    // Check for free email providers pretending to be businesses
     const freeDomains = ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com'];
     const domain = email.split('@')[1];
     if (freeDomains.includes(domain)) {
@@ -149,19 +106,11 @@ class EmailAnalysisService {
         result.reasons.push('Business-looking address using free email provider');
       }
     }
-
     return result;
   }
 
-  /**
-   * Analyze email using GPT-4o
-   */
   async analyzeWithAI(emailContent, senderEmail, subject) {
     try {
-      if (!this.openRouterApiKey) {
-        return null;
-      }
-
       const prompt = `You are a cybersecurity expert analyzing an email for phishing indicators.
 
 Sender: ${senderEmail || 'Unknown'}
@@ -174,70 +123,36 @@ Analyze this email and provide:
 2. List of specific threats found
 3. Brief analysis (2-3 sentences)
 
-Respond in JSON format:
+Respond ONLY with valid JSON (no markdown):
 {
   "riskScore": 75,
   "threats": ["Urgency tactics", "Requests personal info"],
   "analysis": "This email shows typical phishing characteristics..."
 }`;
 
-      const response = await axios.post(
-        this.openRouterUrl,
-        {
-          model: this.model,
-          messages: [
-            {
-              role: 'user',
-              content: prompt
-            }
-          ],
-          max_tokens: 800,
-          temperature: 0.3
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${this.openRouterApiKey}`,
-            'Content-Type': 'application/json',
-            'HTTP-Referer': process.env.CLIENT_URL || 'http://localhost:3000',
-            'X-Title': 'Phishing Detection Platform'
-          },
-          timeout: 20000
-        }
-      );
+      const raw = await cerebrasService.completeJson({
+        system: 'You are a cybersecurity analyst. Always output valid JSON.',
+        user: prompt,
+        model: 'gpt-oss-120b',
+        temperature: 0.2,
+        maxTokens: 800
+      });
 
-      const content = response.data.choices[0].message.content;
+      if (!raw) return null;
 
-      // Parse JSON response
-      let result;
-      try {
-        const jsonMatch = content.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```/);
-        if (jsonMatch) {
-          result = JSON.parse(jsonMatch[1]);
-        } else {
-          result = JSON.parse(content);
-        }
-      } catch {
-        return null;
-      }
-
-      result.riskScore = Math.max(0, Math.min(100, Number(result.riskScore) || 0));
-      result.threats = Array.isArray(result.threats) ? result.threats.map(String).slice(0, 50) : [];
-      result.analysis = typeof result.analysis === 'string' ? result.analysis.slice(0, 5000) : '';
-
-      return result;
-
+      return {
+        riskScore: Math.max(0, Math.min(100, Number(raw.riskScore) || 0)),
+        threats: Array.isArray(raw.threats) ? raw.threats.map(String).slice(0, 50) : [],
+        analysis: typeof raw.analysis === 'string' ? raw.analysis.slice(0, 5000) : ''
+      };
     } catch (error) {
-      console.error('AI email analysis error:', error.response?.data || error.message);
+      console.error('Cerebras email analysis error:', error.response?.data || error.message);
       return null;
     }
   }
 
-  /**
-   * Generate security recommendations
-   */
   generateRecommendations(analysis) {
     const recommendations = [];
-
     if (analysis.riskScore >= 70) {
       recommendations.push('DO NOT click any links or download attachments');
       recommendations.push('DO NOT reply to this email');
@@ -253,11 +168,9 @@ Respond in JSON format:
       recommendations.push('Still verify sender if requesting sensitive actions');
       recommendations.push('Be cautious with any links or attachments');
     }
-
     if (analysis.linksFound.length > 0) {
       recommendations.push('Hover over links to preview URLs before clicking');
     }
-
     return recommendations;
   }
 }

@@ -2,7 +2,7 @@ import express from 'express';
 import multer from 'multer';
 import qrCodeService from '../services/qrCodeService.js';
 import phishingDetectionService from '../services/phishingDetectionService.js';
-import mistralExplanationService from '../services/mistralExplanationService.js';
+import aiExplanationService from '../services/aiExplanationService.js';
 
 const router = express.Router();
 
@@ -70,10 +70,10 @@ router.post('/scan', (req, res, next) => {
             console.log('🌐 URL extracted, running phishing detection...');
             phishingResult = await phishingDetectionService.detectPhishing(extractedURL);
             
-            // Generate AI explanation if Mistral is enabled
-            if (process.env.MISTRAL_API_KEY) {
+            // Generate AI explanation if Cerebras is enabled
+            if (process.env.CEREBRAS_API_KEY) {
                 try {
-                    aiExplanation = await mistralExplanationService.generateExplanation(extractedURL, phishingResult);
+                    aiExplanation = await aiExplanationService.generateExplanation(extractedURL, phishingResult);
                     console.log('🤖 AI explanation generated');
                 } catch (aiError) {
                     console.error('⚠️ AI explanation failed:', aiError.message);

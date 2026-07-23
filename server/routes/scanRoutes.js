@@ -1,6 +1,6 @@
 import express from 'express';
 import phishingDetectionService from '../services/phishingDetectionService.js';
-import mistralExplanationService from '../services/mistralExplanationService.js';
+import aiExplanationService from '../services/aiExplanationService.js';
 import urlscanService from '../services/urlscanService.js';
 import { getScans, addScan, clearScans, deleteScanById } from '../store.js';
 
@@ -95,11 +95,11 @@ router.post('/scan', rateLimit, async (req, res) => {
 
     let aiExplanation = null;
     try {
-      const explanationData = await mistralExplanationService.generateExplanation(cleanUrl, detectionResult);
+      const explanationData = await aiExplanationService.generateExplanation(cleanUrl, detectionResult);
       aiExplanation = {
         text: explanationData.explanation,
         generated_by: explanationData.generated_by || 'System',
-        safety_tips: mistralExplanationService.generateSafetyTips(detectionResult.result)
+        safety_tips: aiExplanationService.generateSafetyTips(detectionResult.result)
       };
     } catch (error) {
       console.error('AI explanation error:', error.message);
@@ -126,7 +126,7 @@ router.post('/scan', rateLimit, async (req, res) => {
           googleSafeBrowsing: !!process.env.GOOGLE_SAFE_BROWSING_API_KEY,
           virusTotal: !!process.env.VIRUSTOTAL_API_KEY,
           urlScan: !!process.env.URLSCAN_API_KEY,
-          mistral: !!process.env.MISTRAL_API_KEY
+          cerebras: !!process.env.CEREBRAS_API_KEY
         }
       }
     });

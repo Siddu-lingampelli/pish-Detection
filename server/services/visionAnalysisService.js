@@ -1,35 +1,28 @@
-import axios from 'axios';
-import fs from 'fs/promises';
+import cerebrasService from './cerebrasService.js';
 
 class VisionAnalysisService {
-  constructor() {
-    this.openRouterApiKey = process.env.OPENROUTER_API_KEY;
-    this.openRouterUrl = 'https://openrouter.ai/api/v1/chat/completions';
-    this.model = 'openai/gpt-4o'; // GPT-4o with vision
+  isConfigured() {
+    return cerebrasService.isEnabled();
   }
 
-  /**
-   * Analyze screenshot using GPT-4o Vision
-   */
   async analyzeScreenshotWithVision(imageBuffer) {
+    if (!this.isConfigured()) {
+      console.log('⚠️  Cerebras API key not configured, falling back to basic analysis');
+      return null;
+    }
+
     try {
-      if (!this.openRouterApiKey) {
-        console.log('⚠️  OpenRouter API key not configured, falling back to basic analysis');
-        return null;
-      }
+      console.log('🔍 Analyzing screenshot with gemma-4-31b (Cerebras)...');
 
-      console.log('🔍 Analyzing screenshot with GPT-4o Vision...');
-
-      // Convert buffer to base64
       const base64Image = imageBuffer.toString('base64');
-      const mimeType = 'image/jpeg'; // Adjust if needed
+      const mimeType = 'image/jpeg';
 
       const prompt = `You are a cybersecurity expert analyzing a screenshot for phishing detection. Analyze this image and provide:
 
 1. **Extracted Text**: All visible text in the image (word-for-word)
 2. **Visual Elements**: Describe login forms, input fields, buttons, logos, colors
 3. **Brand Detection**: Identify any company/brand logos or names (PayPal, Google, Bank names, etc)
-4. **Suspicious Indicators**: 
+4. **Suspicious Indicators**:
    - Urgency language ("act now", "suspended", "verify immediately")
    - Requests for sensitive data (SSN, credit card, password, CVV, PIN)
    - Typosquatting in URLs or domains
@@ -48,88 +41,32 @@ Respond in this JSON format:
   "reasoning": "explanation here"
 }`;
 
-      const response = await axios.post(
-        this.openRouterUrl,
-        {
-          model: this.model,
-          messages: [
-            {
-              role: 'user',
-              content: [
-                {
-                  type: 'text',
-                  text: prompt
-                },
-                {
-                  type: 'image_url',
-                  image_url: {
-                    url: `data:${mimeType};base64,${base64Image}`
-                  }
-                }
-              ]
-            }
-          ],
-          max_tokens: 1500,
-          temperature: 0.3
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${this.openRouterApiKey}`,
-            'Content-Type': 'application/json',
-            'HTTP-Referer': process.env.CLIENT_URL || 'http://localhost:3000',
-            'X-Title': 'Phishing Detection Platform'
-          },
-          timeout: 30000
-        }
-      );
+      const raw = await cerebrasService.analyzeVision({
+        prompt,
+        base64Image,
+        mimeType,
+        maxTokens: 1500
+      });
 
-      const content = response.data.choices[0].message.content;
-      console.log('📄 GPT-4o Vision response received');
-
-      // Try to parse JSON response
-      let analysis;
-      try {
-        const jsonMatch = content.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```/);
-        if (jsonMatch) {
-          analysis = JSON.parse(jsonMatch[1]);
-        } else {
-          analysis = JSON.parse(content);
-        }
-        analysis.extractedText = String(analysis.extractedText || '');
-        analysis.riskScore = Math.max(0, Math.min(100, Number(analysis.riskScore) || 0));
-        analysis.detectedBrands = Array.isArray(analysis.detectedBrands) ? analysis.detectedBrands : [];
-        analysis.inputFields = Array.isArray(analysis.inputFields) ? analysis.inputFields : [];
-        analysis.suspiciousElements = Array.isArray(analysis.suspiciousElements) ? analysis.suspiciousElements : [];
-      } catch (parseError) {
-        console.warn('⚠️  Failed to parse JSON, using text response');
-        analysis = {
-          extractedText: String(content || ''),
-          hasLoginForm: (content || '').toLowerCase().match(/login|form/) !== null,
-          detectedBrands: [],
-          inputFields: [],
-          suspiciousElements: [],
-          riskScore: 50,
-          reasoning: 'Unable to parse structured response'
-        };
-      }
+      const analysis = {
+        extractedText: String(raw.extractedText || ''),
+        hasLoginForm: Boolean(raw.hasLoginForm),
+        detectedBrands: Array.isArray(raw.detectedBrands) ? raw.detectedBrands : [],
+        inputFields: Array.isArray(raw.inputFields) ? raw.inputFields : [],
+        suspiciousElements: Array.isArray(raw.suspiciousElements) ? raw.suspiciousElements : [],
+        riskScore: Math.max(0, Math.min(100, Number(raw.riskScore) || 0)),
+        reasoning: String(raw.reasoning || '')
+      };
 
       console.log(`✅ Vision analysis complete - Risk: ${analysis.riskScore}/100`);
-      console.log(`📝 Extracted text length: ${analysis.extractedText?.length || 0} chars`);
+      console.log(`📝 Extracted text length: ${analysis.detectedBrands?.length || 0} brands`);
       console.log(`🏢 Brands detected: ${analysis.detectedBrands?.join(', ') || 'None'}`);
 
       return analysis;
-
     } catch (error) {
-      console.error('❌ GPT-4o Vision error:', error.response?.data || error.message);
+      console.error('❌ Cerebras vision error:', error.response?.data || error.message);
       return null;
     }
-  }
-
-  /**
-   * Check if Vision API is configured
-   */
-  isConfigured() {
-    return !!this.openRouterApiKey;
   }
 }
 

@@ -13,9 +13,7 @@ services:
         generateValue: true
       - key: CLIENT_URL
         sync: false
-      - key: MISTRAL_API_KEY
-        sync: false
-      - key: OPENROUTER_API_KEY
+      - key: CEREBRAS_API_KEY
         sync: false
       - key: GOOGLE_SAFE_BROWSING_API_KEY
         sync: false
