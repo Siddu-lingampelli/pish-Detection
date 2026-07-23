@@ -31,9 +31,18 @@ function isScannableUrl(url) {
   if (!/^https?:\/\//i.test(url)) return false;
   try {
     const u = new URL(url);
-    if (!/^[a-z0-9.\-:[\]]+$/i.test(u.hostname)) return false;
-    const blocked = ['127.', 'localhost', '0.0.0.0', '::1', '[::1]', '10.', '172.16.', '192.168.', '169.254.'];
-    if (blocked.some(b => u.hostname.startsWith(b))) return false;
+    const h = u.hostname;
+    if (!/^[a-z0-9.\-:[\]]+$/i.test(h)) return false;
+    if (h === 'localhost' || h === '0.0.0.0' || h === '::1' || h === '[::1]' || h === '127.0.0.1') return false;
+    const m = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(h);
+    if (m) {
+      const o = m.slice(1).map(Number);
+      if (o.some(x => x > 255)) return false;
+      if (o[0] === 10 || o[0] === 127 || o[0] === 0) return false;
+      if (o[0] === 172 && o[1] >= 16 && o[1] <= 31) return false;
+      if (o[0] === 192 && o[1] === 168) return false;
+      if (o[0] === 169 && o[1] === 254) return false;
+    }
     return true;
   } catch {
     return false;
@@ -83,7 +92,7 @@ async function scanInBackground(url, tabId) {
 
       chrome.notifications.create({
         type: 'basic',
-        iconUrl: 'icons/icon48.png',
+        iconUrl: 'icons/icon48.svg',
         title: '⚠️ Phishing Warning',
         message: `Risk Score: ${riskScore}/100 - This site may be dangerous!`,
         priority: 2

@@ -7,7 +7,10 @@ const router = express.Router();
 
 const scans = [];
 const MAX_SCANS = 1000;
-const BLOCKED_HOSTS = ['127.0.0.1', 'localhost', '0.0.0.0', '::1', '[::1]', '10.', '172.16.', '192.168.', '169.254.'];
+
+const BLOCKED_HOSTS = new Set(['127.0.0.1', 'localhost', '0.0.0.0', '::1', '[::1]']);
+const BLOCKED_HOST_PARTS = ['10.', '172.16.', '192.168.', '169.254.'];
+const IPV4_RE = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
 
 const ipHits = new Map();
 const RATE_WINDOW_MS = 60 * 1000;
@@ -29,8 +32,27 @@ function rateLimit(req, res, next) {
   next();
 }
 
+function isPrivateIPv4(hostname) {
+  const m = IPV4_RE.exec(hostname);
+  if (!m) return false;
+  const octets = m.slice(1).map(Number);
+  if (octets.some(o => o > 255)) return false;
+  if (octets[0] === 10) return true;
+  if (octets[0] === 127) return true;
+  if (octets[0] === 0) return true;
+  if (octets[0] === 169 && octets[1] === 254) return true;
+  if (octets[0] === 172 && octets[1] >= 16 && octets[1] <= 31) return true;
+  if (octets[0] === 192 && octets[1] === 168) return true;
+  if (octets[0] >= 224) return true; // multicast/reserved
+  return false;
+}
+
 function isBlockedHost(hostname) {
-  return BLOCKED_HOSTS.some(b => hostname.startsWith(b));
+  const h = hostname.toLowerCase().replace(/^\[|\]$/g, '');
+  if (BLOCKED_HOSTS.has(h)) return true;
+  if (isPrivateIPv4(h)) return true;
+  if (h === '::1' || h.startsWith('fc') || h.startsWith('fd')) return true;
+  return false;
 }
 
 function genId() {

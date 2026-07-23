@@ -76,7 +76,7 @@ Always be helpful, clear, and focus on education over fear.`;
         }
       );
 
-      const reply = response.data.choices[0].message.content;
+      const reply = String(response.data.choices[0].message.content || '').slice(0, 8000);
       console.log(`✅ AI reply generated (${reply.length} chars)`);
 
       return reply;

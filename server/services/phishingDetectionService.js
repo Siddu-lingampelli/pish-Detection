@@ -252,8 +252,14 @@ class PhishingDetectionService {
    * Check for typosquatting attempts (misspelled brand domains)
    */
   checkTyposquatting(domain) {
+    if (!domain || domain.length < 3) {
+      return { isTyposquatting: false, similarTo: null, distance: 0 };
+    }
     let cleanDomain = domain.replace(/^(www|m|mobile|secure|login|account|verify)[-.]?/, '');
     cleanDomain = cleanDomain.replace(/[-_]?(login|secure|verify|account|portal|online|bank|pay)$/, '');
+    if (!cleanDomain || cleanDomain.length < 3) {
+      return { isTyposquatting: false, similarTo: null, distance: 0 };
+    }
 
     for (const brand of LEGITIMATE_BRANDS) {
       if (cleanDomain === brand) {
@@ -401,12 +407,13 @@ class PhishingDetectionService {
         timeout: 5000
       });
 
-      const data = response.data.data;
-      const stats = data.attributes.last_analysis_stats;
-      
-      // Calculate threat score based on detections
-      const totalEngines = stats.malicious + stats.suspicious + stats.harmless + stats.undetected;
-      const maliciousCount = stats.malicious + stats.suspicious;
+      const data = response.data?.data;
+      const stats = data?.attributes?.last_analysis_stats;
+      if (!stats) {
+        return { isThreat: false, threatTypes: [], score: 0, source: 'VirusTotal' };
+      }
+      const totalEngines = (stats.malicious || 0) + (stats.suspicious || 0) + (stats.harmless || 0) + (stats.undetected || 0);
+      const maliciousCount = (stats.malicious || 0) + (stats.suspicious || 0);
       const threatScore = totalEngines > 0 ? maliciousCount / totalEngines : 0;
 
       if (maliciousCount > 0) {

@@ -48,8 +48,9 @@ class MistralExplanationService {
         max_tokens: 250
       });
 
-      const explanation = response.choices[0]?.message?.content || this.generateBasicExplanation(url, detectionResult);
-      
+      const rawExplanation = response.choices[0]?.message?.content || this.generateBasicExplanation(url, detectionResult);
+      const explanation = String(rawExplanation).slice(0, 4000);
+
       return {
         explanation: explanation,
         generated_by: 'Mistral AI',

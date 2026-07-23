@@ -76,7 +76,7 @@ Respond in this JSON format:
           headers: {
             'Authorization': `Bearer ${this.openRouterApiKey}`,
             'Content-Type': 'application/json',
-            'HTTP-Referer': 'http://localhost:3000',
+            'HTTP-Referer': process.env.CLIENT_URL || 'http://localhost:3000',
             'X-Title': 'Phishing Detection Platform'
           },
           timeout: 30000

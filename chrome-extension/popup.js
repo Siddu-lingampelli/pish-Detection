@@ -85,7 +85,7 @@ async function scanURL(url) {
     if (riskScore >= 70) {
       chrome.notifications.create({
         type: 'basic',
-        iconUrl: 'icons/icon48.png',
+        iconUrl: 'icons/icon48.svg',
         title: '⚠️ High Risk Website Detected!',
         message: `This website has a risk score of ${riskScore}/100. Be cautious!`,
         priority: 2

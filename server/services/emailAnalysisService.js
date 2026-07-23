@@ -198,7 +198,7 @@ Respond in JSON format:
           headers: {
             'Authorization': `Bearer ${this.openRouterApiKey}`,
             'Content-Type': 'application/json',
-            'HTTP-Referer': 'http://localhost:3000',
+            'HTTP-Referer': process.env.CLIENT_URL || 'http://localhost:3000',
             'X-Title': 'Phishing Detection Platform'
           },
           timeout: 20000
@@ -219,6 +219,10 @@ Respond in JSON format:
       } catch {
         return null;
       }
+
+      result.riskScore = Math.max(0, Math.min(100, Number(result.riskScore) || 0));
+      result.threats = Array.isArray(result.threats) ? result.threats.map(String).slice(0, 50) : [];
+      result.analysis = typeof result.analysis === 'string' ? result.analysis.slice(0, 5000) : '';
 
       return result;
 

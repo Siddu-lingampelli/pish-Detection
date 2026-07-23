@@ -154,16 +154,18 @@ class QRCodeService {
         }
         
         try {
-            const params = {};
+            const params = Object.create(null);
             const queryString = upiString.split('?')[1];
             
             if (queryString) {
                 queryString.split('&').forEach(param => {
                     const [key, value] = param.split('=');
+                    const safeKey = String(key || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 64);
+                    if (!safeKey) return;
                     try {
-                        params[key] = value ? decodeURIComponent(value) : '';
+                        params[safeKey] = value ? decodeURIComponent(value).slice(0, 1000) : '';
                     } catch {
-                        params[key] = value || '';
+                        params[safeKey] = (value || '').slice(0, 1000);
                     }
                 });
             }
@@ -176,14 +178,12 @@ class QRCodeService {
                 currency: params.cu || 'INR',
                 merchantCode: params.mc || '',
                 transactionId: params.tid || '',
-                url: params.url || null, // Suspicious URL parameter
-                rawParams: params
+                url: params.url || null
             };
-        } catch (error) {
+        } catch {
             return {
                 type: 'UPI_PAYMENT',
-                error: 'Failed to parse UPI data',
-                raw: upiString
+                error: 'Failed to parse UPI data'
             };
         }
     }
