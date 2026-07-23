@@ -6,7 +6,12 @@ import { FiLogOut, FiUser } from 'react-icons/fi';
 const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem('user') || 'null');
+  let user = null;
+  try {
+    user = JSON.parse(localStorage.getItem('user') || 'null');
+  } catch {
+    user = null;
+  }
   const isAuthenticated = !!localStorage.getItem('token');
 
   const isActive = (path) => {

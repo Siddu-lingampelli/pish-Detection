@@ -24,7 +24,17 @@ const upload = multer({
  * POST /api/screenshot/analyze
  * Analyze a screenshot for phishing indicators
  */
-router.post('/analyze', upload.single('screenshot'), async (req, res) => {
+router.post('/analyze', (req, res, next) => {
+  upload.single('screenshot')(req, res, (err) => {
+    if (err) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(413).json({ success: false, error: 'File too large (max 10MB)' });
+      }
+      return res.status(400).json({ success: false, error: err.message || 'Upload failed' });
+    }
+    next();
+  });
+}, async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({

@@ -211,7 +211,7 @@ class ScreenshotAnalysisService {
         }
       );
 
-      console.log(`📄 Extracted text (${data.text.length} characters):`, data.text.substring(0, 200));
+      console.log(`📄 Extracted text (${data.text.length} characters)`);
 
       return {
         text: data.text,

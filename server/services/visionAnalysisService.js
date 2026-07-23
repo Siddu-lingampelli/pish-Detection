@@ -114,7 +114,7 @@ Respond in this JSON format:
       }
 
       console.log(`✅ Vision analysis complete - Risk: ${analysis.riskScore}/100`);
-      console.log(`📝 Extracted text: ${analysis.extractedText?.substring(0, 100)}...`);
+      console.log(`📝 Extracted text length: ${analysis.extractedText?.length || 0} chars`);
       console.log(`🏢 Brands detected: ${analysis.detectedBrands?.join(', ') || 'None'}`);
 
       return analysis;

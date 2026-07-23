@@ -27,7 +27,17 @@ const upload = multer({
  * @desc    Scan QR code from uploaded image and check for phishing
  * @access  Public
  */
-router.post('/scan', upload.single('qrImage'), async (req, res) => {
+router.post('/scan', (req, res, next) => {
+    upload.single('qrImage')(req, res, (err) => {
+        if (err) {
+            if (err.code === 'LIMIT_FILE_SIZE') {
+                return res.status(413).json({ success: false, error: 'File too large (max 10MB)' });
+            }
+            return res.status(400).json({ success: false, error: err.message || 'Upload failed' });
+        }
+        next();
+    });
+}, async (req, res) => {
     try {
         // Check if file was uploaded
         if (!req.file) {
@@ -43,8 +53,7 @@ router.post('/scan', upload.single('qrImage'), async (req, res) => {
 
         // Step 1: Decode QR code from image
         const qrResult = await qrCodeService.decodeQRCode(req.file.buffer);
-        console.log('✅ QR Code decoded:', qrResult.type);
-        console.log('   Data:', qrResult.data);
+        console.log('✅ QR Code decoded:', qrResult.type, 'data length:', qrResult.data?.length || 0);
 
         // Step 2: Detect suspicious patterns in QR data
         const suspicionAnalysis = qrCodeService.detectSuspiciousPatterns(qrResult.data);

@@ -32,8 +32,8 @@ const Register = () => {
       return;
     }
 
-    if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters');
+    if (formData.password.length < 8) {
+      setError('Password must be at least 8 characters');
       return;
     }
 
@@ -121,7 +121,8 @@ const Register = () => {
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
-                  placeholder="Minimum 6 characters"
+                  placeholder="Minimum 8 characters"
+                  maxLength={128}
                   className="w-full bg-[#0a0a0a] border border-gray-800 rounded-lg pl-12 pr-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-gray-700"
                 />
               </div>

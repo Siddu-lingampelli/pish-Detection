@@ -5,9 +5,9 @@
   "description": "Real-time phishing detection and website security scanner powered by AI",
   "permissions": [
     "activeTab",
-    "tabs",
     "storage",
-    "notifications"
+    "notifications",
+    "scripting"
   ],
   "host_permissions": [
     "http://*/*",

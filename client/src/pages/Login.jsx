@@ -89,6 +89,7 @@ const Login = () => {
                   value={formData.password}
                   onChange={handleChange}
                   placeholder="Enter your password"
+                  maxLength={128}
                   className="w-full bg-[#0a0a0a] border border-gray-800 rounded-lg pl-12 pr-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-gray-700"
                 />
               </div>

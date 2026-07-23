@@ -16,8 +16,14 @@ router.post('/chat', async (req, res) => {
         error: 'Message is required and must be a string' 
       });
     }
+    if (message.length > 4000) {
+      return res.status(400).json({ error: 'Message too long (max 4000 chars)' });
+    }
+    if (conversationHistory && !Array.isArray(conversationHistory)) {
+      return res.status(400).json({ error: 'conversationHistory must be an array' });
+    }
 
-    console.log(`💬 AI Assistant query: "${message.substring(0, 50)}..."`);
+    console.log(`💬 AI Assistant query: ${message.length} chars`);
 
     const reply = await aiAssistantService.chat(message, conversationHistory || []);
 

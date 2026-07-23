@@ -22,8 +22,14 @@ router.post('/analyze', async (req, res) => {
     if (senderEmail && typeof senderEmail !== 'string') {
       return res.status(400).json({ error: 'Invalid sender email' });
     }
+    if (senderEmail && senderEmail.length > 254) {
+      return res.status(400).json({ error: 'Sender email too long' });
+    }
     if (subject && typeof subject !== 'string') {
       return res.status(400).json({ error: 'Invalid subject' });
+    }
+    if (subject && subject.length > 500) {
+      return res.status(400).json({ error: 'Subject too long' });
     }
 
     console.log(`📧 Analyzing email (${emailContent.length} characters)`);

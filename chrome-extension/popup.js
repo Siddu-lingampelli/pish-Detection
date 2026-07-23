@@ -29,13 +29,34 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 });
 
+// Map server response to a 0-100 numeric riskScore for the popup UI
+function deriveRiskScore(serverData) {
+  const inner = serverData?.data || {};
+  const confidence = Number(inner.confidence_score);
+  const result = String(inner.result || '').toLowerCase();
+  let base;
+  if (!isNaN(confidence)) {
+    base = result === 'phishing' ? Math.round(confidence * 100)
+         : result === 'suspicious' ? Math.round(confidence * 100)
+         : Math.round((1 - confidence) * 100);
+  } else {
+    base = 0;
+  }
+  const factorBoost = Math.min(20, (inner.meta_data?.risk_factors?.length || 0) * 5);
+  return Math.max(0, Math.min(100, base + factorBoost));
+}
+
+function deriveThreats(serverData) {
+  const inner = serverData?.data || {};
+  return Array.isArray(inner.meta_data?.risk_factors) ? inner.meta_data.risk_factors : [];
+}
+
 // Scan URL using backend API
 async function scanURL(url) {
   const loadingDiv = document.getElementById('loading');
   const resultsDiv = document.getElementById('results');
 
   try {
-    // Call your existing scan API
     const response = await fetch(`${API_URL}/scan`, {
       method: 'POST',
       headers: {
@@ -50,23 +71,23 @@ async function scanURL(url) {
 
     const data = await response.json();
 
-    // Hide loading, show results
     loadingDiv.classList.add('hidden');
     resultsDiv.classList.remove('hidden');
 
-    // Update UI with results
-    updateUI(data, url);
+    const riskScore = deriveRiskScore(data);
+    const threats = deriveThreats(data);
+    const displayData = { riskScore, threats };
 
-    // Save to history
-    await saveToHistory(url, data);
+    updateUI(displayData, url);
 
-    // Show notification if high risk
-    if (data.riskScore >= 70) {
+    await saveToHistory(url, displayData);
+
+    if (riskScore >= 70) {
       chrome.notifications.create({
         type: 'basic',
         iconUrl: 'icons/icon48.png',
         title: '⚠️ High Risk Website Detected!',
-        message: `This website has a risk score of ${data.riskScore}/100. Be cautious!`,
+        message: `This website has a risk score of ${riskScore}/100. Be cautious!`,
         priority: 2
       });
     }

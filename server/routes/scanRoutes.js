@@ -6,7 +6,28 @@ import urlscanService from '../services/urlscanService.js';
 const router = express.Router();
 
 const scans = [];
+const MAX_SCANS = 1000;
 const BLOCKED_HOSTS = ['127.0.0.1', 'localhost', '0.0.0.0', '::1', '[::1]', '10.', '172.16.', '192.168.', '169.254.'];
+
+const ipHits = new Map();
+const RATE_WINDOW_MS = 60 * 1000;
+const RATE_MAX = 30;
+
+function rateLimit(req, res, next) {
+  const ip = req.ip || 'unknown';
+  const now = Date.now();
+  const rec = ipHits.get(ip) || { count: 0, resetAt: now + RATE_WINDOW_MS };
+  if (now > rec.resetAt) {
+    rec.count = 0;
+    rec.resetAt = now + RATE_WINDOW_MS;
+  }
+  rec.count++;
+  ipHits.set(ip, rec);
+  if (rec.count > RATE_MAX) {
+    return res.status(429).json({ success: false, message: 'Too many requests. Slow down.' });
+  }
+  next();
+}
 
 function isBlockedHost(hostname) {
   return BLOCKED_HOSTS.some(b => hostname.startsWith(b));
@@ -16,7 +37,7 @@ function genId() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
 }
 
-router.post('/scan', async (req, res) => {
+router.post('/scan', rateLimit, async (req, res) => {
   try {
     const { url } = req.body;
 
@@ -73,6 +94,7 @@ router.post('/scan', async (req, res) => {
       created_at: new Date()
     };
     scans.unshift(record);
+    if (scans.length > MAX_SCANS) scans.length = MAX_SCANS;
 
     res.status(200).json({
       success: true,

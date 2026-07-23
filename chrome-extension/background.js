@@ -6,21 +6,53 @@ chrome.storage.local.get(['apiUrl'], (result) => {
   if (result.apiUrl) API_URL = result.apiUrl.replace(/\/+$/, '') + '/api';
 });
 
+function deriveRiskScore(serverData) {
+  const inner = serverData?.data || {};
+  const confidence = Number(inner.confidence_score);
+  const result = String(inner.result || '').toLowerCase();
+  let base;
+  if (!isNaN(confidence)) {
+    base = result === 'phishing' ? Math.round(confidence * 100)
+         : Math.round(confidence * 100);
+  } else {
+    base = 0;
+  }
+  const factorBoost = Math.min(20, (inner.meta_data?.risk_factors?.length || 0) * 5);
+  return Math.max(0, Math.min(100, base + factorBoost));
+}
+
+function deriveThreats(serverData) {
+  const inner = serverData?.data || {};
+  return Array.isArray(inner.meta_data?.risk_factors) ? inner.meta_data.risk_factors : [];
+}
+
+function isScannableUrl(url) {
+  if (!url) return false;
+  if (!/^https?:\/\//i.test(url)) return false;
+  try {
+    const u = new URL(url);
+    if (!/^[a-z0-9.\-:[\]]+$/i.test(u.hostname)) return false;
+    const blocked = ['127.', 'localhost', '0.0.0.0', '::1', '[::1]', '10.', '172.16.', '192.168.', '169.254.'];
+    if (blocked.some(b => u.hostname.startsWith(b))) return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 // Listen for tab updates (when user navigates to new page)
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
-  // Only scan when page is fully loaded
   if (changeInfo.status === 'complete' && tab.url) {
-    // Skip chrome:// and extension pages
     if (tab.url.startsWith('chrome://') || tab.url.startsWith('chrome-extension://')) {
       return;
     }
-
-    // Auto-scan in background
+    if (!isScannableUrl(tab.url)) {
+      return;
+    }
     await scanInBackground(tab.url, tabId);
   }
 });
 
-// Scan URL in background
 async function scanInBackground(url, tabId) {
   try {
     const response = await fetch(`${API_URL}/scan`, {
@@ -37,25 +69,23 @@ async function scanInBackground(url, tabId) {
     }
 
     const data = await response.json();
+    const riskScore = deriveRiskScore(data);
+    const threats = deriveThreats(data);
 
-    // Update badge based on risk
-    updateBadge(tabId, data.riskScore);
+    updateBadge(tabId, riskScore);
 
-    // Show warning for high-risk sites
-    if (data.riskScore >= 70) {
-      // Inject warning overlay
+    if (riskScore >= 70) {
       chrome.scripting.executeScript({
         target: { tabId },
         func: showWarningOverlay,
-        args: [data.riskScore, data.threats || []]
+        args: [riskScore, threats]
       });
 
-      // Send notification
       chrome.notifications.create({
         type: 'basic',
         iconUrl: 'icons/icon48.png',
         title: '⚠️ Phishing Warning',
-        message: `Risk Score: ${data.riskScore}/100 - This site may be dangerous!`,
+        message: `Risk Score: ${riskScore}/100 - This site may be dangerous!`,
         priority: 2
       });
     }
