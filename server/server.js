@@ -44,7 +44,14 @@ app.get('/health', (req, res) => {
   res.status(200).json({
     status: 'OK',
     message: 'Phishing Detection API is running',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    apis: {
+      googleSafeBrowsing: !!process.env.GOOGLE_SAFE_BROWSING_API_KEY,
+      virusTotal: !!process.env.VIRUSTOTAL_API_KEY,
+      urlScan: !!process.env.URLSCAN_API_KEY,
+      mistral: !!process.env.MISTRAL_API_KEY,
+      openRouter: !!process.env.OPENROUTER_API_KEY
+    }
   });
 });
 
@@ -67,6 +74,12 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log('API keys configured:');
+  console.log(`  Google Safe Browsing: ${process.env.GOOGLE_SAFE_BROWSING_API_KEY ? 'YES' : 'NO'}`);
+  console.log(`  VirusTotal:           ${process.env.VIRUSTOTAL_API_KEY ? 'YES' : 'NO'}`);
+  console.log(`  URLScan.io:           ${process.env.URLSCAN_API_KEY ? 'YES' : 'NO'}`);
+  console.log(`  Mistral AI:           ${process.env.MISTRAL_API_KEY ? 'YES' : 'NO'}`);
+  console.log(`  OpenRouter:           ${process.env.OPENROUTER_API_KEY ? 'YES' : 'NO'}`);
 });
 
 export default app;

@@ -94,8 +94,8 @@ const URLScanner = ({ onScan, loading }) => {
         <div className="flex flex-wrap gap-2">
           {[
             { label: 'Legitimate', url: 'https://www.google.com' },
-            { label: 'Suspicious', url: 'http://secure-paypal-verify-login.tk' },
-            { label: 'IP-based', url: 'http://192.168.1.1/login' }
+            { label: 'Suspicious', url: 'http://secure-paypa1-login.tk' },
+            { label: 'Brand typo', url: 'https://www.go0gle.com' }
           ].map((test, index) => (
             <button
               key={index}

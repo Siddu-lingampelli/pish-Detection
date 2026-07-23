@@ -119,7 +119,16 @@ router.post('/scan', rateLimit, async (req, res) => {
     res.status(200).json({
       success: true,
       message: 'URL scanned successfully',
-      data: { ...record, ai_explanation: aiExplanation }
+      data: {
+        ...record,
+        ai_explanation: aiExplanation,
+        api_status: {
+          googleSafeBrowsing: !!process.env.GOOGLE_SAFE_BROWSING_API_KEY,
+          virusTotal: !!process.env.VIRUSTOTAL_API_KEY,
+          urlScan: !!process.env.URLSCAN_API_KEY,
+          mistral: !!process.env.MISTRAL_API_KEY
+        }
+      }
     });
 
   } catch (error) {
