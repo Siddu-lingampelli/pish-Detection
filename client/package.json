@@ -22,6 +22,6 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "postinstall": "npm install --prefix server"
+    "postinstall": "cd .. && npm install --prefix server"
   }
 }
