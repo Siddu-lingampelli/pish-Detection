@@ -2,6 +2,7 @@ import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { requireAuth } from '../middleware/auth.js';
+import { findUserByEmail, findUserById, addUser } from '../store.js';
 
 const router = express.Router();
 
@@ -11,8 +12,6 @@ if (!JWT_SECRET) {
   process.exit(1);
 }
 
-const users = new Map();
-const usersById = new Map();
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const loginAttempts = new Map();
 const MAX_LOGIN_ATTEMPTS = 5;
@@ -53,7 +52,7 @@ router.post('/register', async (req, res) => {
     if (password.length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters' });
     if (password.length > 200) return res.status(400).json({ error: 'Password too long' });
 
-    if (users.has(cleanEmail)) return res.status(400).json({ error: 'Email already registered' });
+    if (findUserByEmail(cleanEmail)) return res.status(400).json({ error: 'Email already registered' });
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = {
@@ -63,8 +62,7 @@ router.post('/register', async (req, res) => {
       password: hashedPassword,
       createdAt: new Date()
     };
-    users.set(cleanEmail, user);
-    usersById.set(user._id, user);
+    addUser(user);
 
     const token = jwt.sign({ userId: user._id, email: user.email }, JWT_SECRET, { expiresIn: '7d' });
 
@@ -94,7 +92,7 @@ router.post('/login', async (req, res) => {
     const cleanEmail = email.trim().toLowerCase();
     if (!cleanEmail || !password) return res.status(400).json({ error: 'Email and password are required' });
 
-    const user = users.get(cleanEmail);
+    const user = findUserByEmail(cleanEmail);
     const dummyHash = '$2b$10$CwTycUXWue0Thq9StjUM0uJ8D8E1Q8vQH8d8jN8qj8vQH8d8jN8qj';
     const isPasswordValid = await bcrypt.compare(password, user ? user.password : dummyHash);
     if (!user || !isPasswordValid) {
@@ -114,7 +112,7 @@ router.post('/login', async (req, res) => {
 
 router.get('/me', requireAuth, (req, res) => {
   try {
-    const user = usersById.get(req.userId);
+    const user = findUserById(req.userId);
     if (!user) return res.status(404).json({ error: 'User not found' });
 
     res.json({ success: true, user: { id: user._id, name: user.name, email: user.email } });

@@ -2,14 +2,13 @@ import express from 'express';
 import phishingDetectionService from '../services/phishingDetectionService.js';
 import mistralExplanationService from '../services/mistralExplanationService.js';
 import urlscanService from '../services/urlscanService.js';
+import { getScans, addScan, clearScans, deleteScanById } from '../store.js';
 
 const router = express.Router();
 
-const scans = [];
 const MAX_SCANS = 1000;
 
 const BLOCKED_HOSTS = new Set(['127.0.0.1', 'localhost', '0.0.0.0', '::1', '[::1]']);
-const BLOCKED_HOST_PARTS = ['10.', '172.16.', '192.168.', '169.254.'];
 const IPV4_RE = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
 
 const ipHits = new Map();
@@ -43,7 +42,7 @@ function isPrivateIPv4(hostname) {
   if (octets[0] === 169 && octets[1] === 254) return true;
   if (octets[0] === 172 && octets[1] >= 16 && octets[1] <= 31) return true;
   if (octets[0] === 192 && octets[1] === 168) return true;
-  if (octets[0] >= 224) return true; // multicast/reserved
+  if (octets[0] >= 224) return true;
   return false;
 }
 
@@ -115,8 +114,7 @@ router.post('/scan', rateLimit, async (req, res) => {
       scan_duration: detectionResult.scan_duration,
       created_at: new Date()
     };
-    scans.unshift(record);
-    if (scans.length > MAX_SCANS) scans.length = MAX_SCANS;
+    addScan(record);
 
     res.status(200).json({
       success: true,
@@ -155,6 +153,7 @@ router.get('/urlscan/:scanId', async (req, res) => {
 
 router.get('/history', (req, res) => {
   try {
+    const scans = getScans();
     const { limit = 50, page = 1, result } = req.query;
     const pageNum = Math.max(1, parseInt(page) || 1);
     const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 50));
@@ -183,6 +182,7 @@ router.get('/history', (req, res) => {
 
 router.get('/stats', (req, res) => {
   try {
+    const scans = getScans();
     const totalScans = scans.length;
     const legit = scans.filter(s => s.result === 'Legit').length;
     const suspicious = scans.filter(s => s.result === 'Suspicious').length;
@@ -223,11 +223,10 @@ router.get('/stats', (req, res) => {
 router.delete('/history/:id', (req, res) => {
   try {
     const { id } = req.params;
-    const idx = scans.findIndex(s => s._id === id);
-    if (idx === -1) {
+    const deleted = deleteScanById(id);
+    if (!deleted) {
       return res.status(404).json({ success: false, message: 'Scan record not found' });
     }
-    const deleted = scans.splice(idx, 1)[0];
     res.status(200).json({ success: true, message: 'Scan record deleted successfully', data: deleted });
 
   } catch (error) {
@@ -238,8 +237,7 @@ router.delete('/history/:id', (req, res) => {
 
 router.delete('/history', (req, res) => {
   try {
-    const deletedCount = scans.length;
-    scans.length = 0;
+    const deletedCount = clearScans();
     res.status(200).json({ success: true, message: 'All scan history cleared successfully', data: { deletedCount } });
 
   } catch (error) {

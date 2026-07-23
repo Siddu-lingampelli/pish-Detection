@@ -9,6 +9,7 @@ import screenshotRoutes from './routes/screenshotRoutes.js';
 import aiAssistantRoutes from './routes/aiAssistantRoutes.js';
 import emailRoutes from './routes/emailRoutes.js';
 import authRoutes from './routes/authRoutes.js';
+import { loadStore } from './store.js';
 
 dotenv.config();
 
@@ -16,6 +17,8 @@ if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
   console.error('FATAL: JWT_SECRET is missing or too short (need at least 32 chars)');
   process.exit(1);
 }
+
+loadStore();
 
 const app = express();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
