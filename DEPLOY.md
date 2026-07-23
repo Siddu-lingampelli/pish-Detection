@@ -7,6 +7,7 @@
 3. Connect your repo: `Siddu-lingampelli/pish-Detection`
 4. Render reads `render.yaml` automatically. Click **Apply**.
 5. Wait for first build (~5–8 min: installs client + server, builds React, builds Node).
+6. Note your URL: `https://phishguard.onrender.com` (or whatever Render assigns).
 
 ## Set the API keys (optional but recommended)
 
@@ -20,17 +21,31 @@ After deploy, dashboard → your service → **Environment** → add:
 
 Without keys, the relevant features degrade gracefully (heuristics only).
 
-`JWT_SECRET` is auto-generated. `CLIENT_URL` is auto-set to your Render URL.
+`JWT_SECRET` is auto-generated.
 
-## 24/7 caveat
+## Keep alive 24/7 (free)
 
-Free plan sleeps after **15 min of no traffic**. First request after sleep = ~30s cold start.
+Render free plan sleeps after **15 min of no traffic**. First request after sleep = ~30s cold start.
 
-**To stay awake 24/7 for free**: use a cron pinger:
-- https://cron-job.org (free)
-- Create a job that hits `https://your-app.onrender.com/health` every 14 minutes
+### Option A — cron-job.org (primary, ~3 min)
 
-This is the standard Render free-tier workaround. The app itself doesn't sleep while being pinged.
+1. Go to https://cron-job.org → sign up (free)
+2. **Create cronjob**:
+   - **Title:** `phishguard-keepalive`
+   - **URL:** `https://phishguard.onrender.com/health` (use your actual URL)
+   - **Execution schedule:** Every 14 minutes
+3. Save. Test it once → should return `200 OK` with `{"status":"OK",...}`.
+
+### Option B — GitHub Actions (backup, included in this repo)
+
+This repo already includes `.github/workflows/keep-alive.yml` that pings every 14 minutes via GitHub's free cron (2000 min/month free).
+
+1. (Optional) Set the `RENDER_URL` repo secret for a custom URL:
+   - Repo → **Settings** → **Secrets and variables** → **Actions** → **New repository secret**
+   - Name: `RENDER_URL`  Value: `https://phishguard.onrender.com`
+2. Done. Action runs on schedule automatically.
+
+You can use **both A and B** for redundancy.
 
 ## Where data lives
 
