@@ -12,6 +12,9 @@ class EmailAnalysisService {
    */
   async analyzeEmail(emailContent, senderEmail = '', subject = '') {
     try {
+      if (typeof emailContent !== 'string') {
+        throw new Error('Invalid email content');
+      }
       const analysisResults = {
         riskScore: 0,
         riskLevel: 'LOW',
@@ -126,7 +129,7 @@ class EmailAnalysisService {
       result.reasons.push('Suspicious sender: Mimics PayPal noreply address');
     }
 
-    if (/\d{4,}/.test(email)) {
+    if (/\d{4,}/.test(email.split('@')[0] || '')) {
       result.isSuspicious = true;
       result.reasons.push('Sender email contains excessive numbers');
     }

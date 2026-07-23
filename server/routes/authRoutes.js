@@ -7,12 +7,35 @@ const router = express.Router();
 
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) {
-  console.error('JWT_SECRET is not set');
+  console.error('FATAL: JWT_SECRET is not set');
   process.exit(1);
 }
 
 const users = new Map();
+const usersById = new Map();
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const loginAttempts = new Map();
+const MAX_LOGIN_ATTEMPTS = 5;
+const LOGIN_WINDOW_MS = 15 * 60 * 1000;
+
+function checkLoginRateLimit(ip) {
+  const now = Date.now();
+  const record = loginAttempts.get(ip) || { count: 0, firstAt: now };
+  if (now - record.firstAt > LOGIN_WINDOW_MS) {
+    record.count = 0;
+    record.firstAt = now;
+  }
+  if (record.count >= MAX_LOGIN_ATTEMPTS) {
+    return false;
+  }
+  record.count++;
+  loginAttempts.set(ip, record);
+  return true;
+}
+
+function clearLoginAttempts(ip) {
+  loginAttempts.delete(ip);
+}
 
 router.post('/register', async (req, res) => {
   try {
@@ -28,6 +51,7 @@ router.post('/register', async (req, res) => {
     if (cleanName.length > 100) return res.status(400).json({ error: 'Name too long' });
     if (!EMAIL_RE.test(cleanEmail)) return res.status(400).json({ error: 'Invalid email format' });
     if (password.length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters' });
+    if (password.length > 200) return res.status(400).json({ error: 'Password too long' });
 
     if (users.has(cleanEmail)) return res.status(400).json({ error: 'Email already registered' });
 
@@ -40,10 +64,9 @@ router.post('/register', async (req, res) => {
       createdAt: new Date()
     };
     users.set(cleanEmail, user);
+    usersById.set(user._id, user);
 
     const token = jwt.sign({ userId: user._id, email: user.email }, JWT_SECRET, { expiresIn: '7d' });
-
-    console.log('New user registered:', cleanEmail);
 
     res.status(201).json({ success: true, token, user: { id: user._id, name: user.name, email: user.email } });
 
@@ -55,6 +78,11 @@ router.post('/register', async (req, res) => {
 
 router.post('/login', async (req, res) => {
   try {
+    const ip = req.ip || req.headers['x-forwarded-for'] || 'unknown';
+    if (!checkLoginRateLimit(ip)) {
+      return res.status(429).json({ error: 'Too many login attempts. Try again later.' });
+    }
+
     const { email, password } = req.body;
 
     if (typeof email !== 'string' || typeof password !== 'string') {
@@ -69,6 +97,7 @@ router.post('/login', async (req, res) => {
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) return res.status(401).json({ error: 'Invalid credentials' });
 
+    clearLoginAttempts(ip);
     const token = jwt.sign({ userId: user._id, email: user.email }, JWT_SECRET, { expiresIn: '7d' });
 
     res.json({ success: true, token, user: { id: user._id, name: user.name, email: user.email } });
@@ -81,7 +110,7 @@ router.post('/login', async (req, res) => {
 
 router.get('/me', requireAuth, (req, res) => {
   try {
-    const user = [...users.values()].find(u => u._id === req.userId);
+    const user = usersById.get(req.userId);
     if (!user) return res.status(404).json({ error: 'User not found' });
 
     res.json({ success: true, user: { id: user._id, name: user.name, email: user.email } });

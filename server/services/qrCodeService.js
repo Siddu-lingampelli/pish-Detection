@@ -202,20 +202,17 @@ class QRCodeService {
             const upiData = this.parseUPI(data);
             
             // Check for suspicious amount
-            if (upiData.amount && parseFloat(upiData.amount) > 10000) {
+            if (upiData && upiData.amount && !isNaN(parseFloat(upiData.amount)) && parseFloat(upiData.amount) > 10000) {
                 suspiciousIndicators.push('High amount in UPI payment');
                 riskScore += 30;
             }
             
-            // Check for URL parameter (redirect scam)
-            if (upiData.url) {
+            if (upiData && upiData.url) {
                 suspiciousIndicators.push('Contains redirect URL in UPI payment');
                 riskScore += 40;
             }
             
-            // Check for suspicious notes
-            const suspiciousKeywords = ['kyc', 'verify', 'update', 'reward', 'prize', 'won', 'claim', 'urgent'];
-            if (upiData.note) {
+            if (upiData && upiData.note) {
                 const lowerNote = upiData.note.toLowerCase();
                 suspiciousKeywords.forEach(keyword => {
                     if (lowerNote.includes(keyword)) {

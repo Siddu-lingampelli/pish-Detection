@@ -191,7 +191,7 @@ class PhishingDetectionService {
     }
 
     // Check for IP address in URL
-    if (/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/.test(hostname)) {
+    if (/^(?:\d{1,3}\.){3}\d{1,3}$/.test(hostname)) {
       riskFactors.push('Uses IP address instead of domain name');
       riskScore += 0.3;
     }
@@ -252,17 +252,14 @@ class PhishingDetectionService {
    * Check for typosquatting attempts (misspelled brand domains)
    */
   checkTyposquatting(domain) {
-    // Remove common prefixes/suffixes
     let cleanDomain = domain.replace(/^(www|m|mobile|secure|login|account|verify)[-.]?/, '');
     cleanDomain = cleanDomain.replace(/[-_]?(login|secure|verify|account|portal|online|bank|pay)$/, '');
 
     for (const brand of LEGITIMATE_BRANDS) {
-      // Exact match (it's the real brand, unless other factors are suspicious)
       if (cleanDomain === brand) {
         continue;
       }
 
-      // Check similarity
       const distance = levenshteinDistance(cleanDomain, brand);
       const maxLength = Math.max(cleanDomain.length, brand.length);
       const similarity = 1 - (distance / maxLength);
@@ -345,7 +342,7 @@ class PhishingDetectionService {
   async checkGoogleSafeBrowsing(url) {
     try {
       const apiKey = process.env.GOOGLE_SAFE_BROWSING_API_KEY;
-      const apiUrl = `https://safebrowsing.googleapis.com/v4/threatMatches:find?key=${apiKey}`;
+      const apiUrl = 'https://safebrowsing.googleapis.com/v4/threatMatches:find';
 
       const requestBody = {
         client: {
@@ -361,6 +358,7 @@ class PhishingDetectionService {
       };
 
       const response = await axios.post(apiUrl, requestBody, {
+        params: { key: apiKey },
         timeout: 5000
       });
 
@@ -393,7 +391,6 @@ class PhishingDetectionService {
     try {
       const apiKey = process.env.VIRUSTOTAL_API_KEY;
       
-      // VirusTotal v3 API - URL scan
       const urlId = Buffer.from(url).toString('base64url').replace(/=+$/, '');
       const apiUrl = `https://www.virustotal.com/api/v3/urls/${urlId}`;
 

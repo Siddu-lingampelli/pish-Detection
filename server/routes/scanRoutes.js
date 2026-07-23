@@ -25,17 +25,23 @@ router.post('/scan', async (req, res) => {
     }
 
     const cleanUrl = url.trim();
+    if (cleanUrl.length === 0) {
+      return res.status(400).json({ success: false, message: 'URL is required' });
+    }
     if (cleanUrl.length > 2048) {
       return res.status(400).json({ success: false, message: 'URL too long' });
     }
 
-    if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
+    if (!/^https?:\/\//i.test(cleanUrl)) {
       return res.status(400).json({ success: false, message: 'URL must start with http:// or https://' });
     }
 
     let parsedUrl;
     try {
       parsedUrl = new URL(cleanUrl);
+      if (!/^[a-z0-9.\-:[\]]+$/i.test(parsedUrl.hostname)) {
+        return res.status(400).json({ success: false, message: 'Invalid hostname' });
+      }
       if (isBlockedHost(parsedUrl.hostname)) {
         return res.status(400).json({ success: false, message: 'Cannot scan internal addresses' });
       }
@@ -147,8 +153,9 @@ router.get('/stats', (req, res) => {
     const sevenDaysAgo = new Date(Date.now() - 7 * 86400000);
     const recentScans = scans.filter(s => new Date(s.created_at) >= sevenDaysAgo).length;
 
+    const totalDuration = scans.reduce((a, s) => a + (Number(s.scan_duration) || 0), 0);
     const avgScanDuration = totalScans > 0
-      ? +(scans.reduce((a, s) => a + s.scan_duration, 0) / totalScans).toFixed(2)
+      ? +(totalDuration / totalScans).toFixed(2)
       : 0;
 
     const riskFactorCount = {};

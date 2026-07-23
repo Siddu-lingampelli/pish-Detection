@@ -140,6 +140,8 @@ class ScreenshotAnalysisService {
 
       // Step 9: Add suspicious elements list
       analysisResults.suspiciousElements = this.collectSuspiciousElements(analysisResults);
+      analysisResults.visualAnalysis.hasSuspiciousColors = analysisResults.visualAnalysis.hasSuspiciousColors || false;
+      analysisResults.suspiciousColors = analysisResults.visualAnalysis.hasSuspiciousColors;
 
       const duration = Date.now() - startTime;
       console.log(`✅ Screenshot analysis completed in ${duration}ms`);

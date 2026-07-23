@@ -89,18 +89,22 @@ Respond in this JSON format:
       // Try to parse JSON response
       let analysis;
       try {
-        // Extract JSON from markdown code blocks if present
         const jsonMatch = content.match(/```(?:json)?\s*(\{[\s\S]*\})\s*```/);
         if (jsonMatch) {
           analysis = JSON.parse(jsonMatch[1]);
         } else {
           analysis = JSON.parse(content);
         }
+        analysis.extractedText = String(analysis.extractedText || '');
+        analysis.riskScore = Math.max(0, Math.min(100, Number(analysis.riskScore) || 0));
+        analysis.detectedBrands = Array.isArray(analysis.detectedBrands) ? analysis.detectedBrands : [];
+        analysis.inputFields = Array.isArray(analysis.inputFields) ? analysis.inputFields : [];
+        analysis.suspiciousElements = Array.isArray(analysis.suspiciousElements) ? analysis.suspiciousElements : [];
       } catch (parseError) {
         console.warn('⚠️  Failed to parse JSON, using text response');
         analysis = {
-          extractedText: content,
-          hasLoginForm: content.toLowerCase().includes('login') || content.toLowerCase().includes('form'),
+          extractedText: String(content || ''),
+          hasLoginForm: (content || '').toLowerCase().match(/login|form/) !== null,
           detectedBrands: [],
           inputFields: [],
           suspiciousElements: [],

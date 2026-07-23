@@ -41,17 +41,20 @@ Always be helpful, clear, and focus on education over fear.`;
       ];
 
       // Add conversation history (last 6 messages for context)
+      const validRoles = new Set(['user', 'assistant', 'system']);
+
       conversationHistory.slice(-6).forEach(msg => {
-        messages.push({
-          role: msg.role,
-          content: msg.content
-        });
+        if (msg && validRoles.has(msg.role) && typeof msg.content === 'string') {
+          messages.push({
+            role: msg.role,
+            content: msg.content.slice(0, 4000)
+          });
+        }
       });
 
-      // Add current user message
       messages.push({
         role: 'user',
-        content: userMessage
+        content: String(userMessage).slice(0, 4000)
       });
 
       console.log(`🤖 Calling Mistral AI with ${messages.length} messages...`);

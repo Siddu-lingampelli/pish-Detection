@@ -28,6 +28,10 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+    }
     if (error.response) {
       console.error('API Error:', error.response.data);
     } else if (error.request) {
