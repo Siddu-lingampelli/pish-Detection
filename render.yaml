@@ -3,8 +3,8 @@ services:
     name: phishguard
     runtime: node
     plan: free
-    buildCommand: npm --prefix client install && npm --prefix client run build && npm --prefix server install
-    startCommand: cd server && npm start
+    buildCommand: npm run install:all && npm run build
+    startCommand: cd server && node server.js
     healthCheckPath: /health
     envVars:
       - key: NODE_ENV
