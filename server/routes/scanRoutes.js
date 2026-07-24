@@ -6,22 +6,29 @@ import { getScans, addScan, clearScans, deleteScanById } from '../store.js';
 
 const router = express.Router();
 
-const MAX_SCANS = 1000;
-
 const BLOCKED_HOSTS = new Set(['127.0.0.1', 'localhost', '0.0.0.0', '::1', '[::1]']);
 const IPV4_RE = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
+const HOSTNAME_RE = /^[a-z0-9.\-:[\]]+$/i;
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const ipHits = new Map();
 const RATE_WINDOW_MS = 60 * 1000;
 const RATE_MAX = 30;
+const CLEANUP_INTERVAL = 5 * 60 * 1000;
+
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, rec] of ipHits) {
+    if (now > rec.resetAt + RATE_WINDOW_MS) ipHits.delete(ip);
+  }
+}, CLEANUP_INTERVAL).unref();
 
 function rateLimit(req, res, next) {
   const ip = req.ip || 'unknown';
   const now = Date.now();
-  const rec = ipHits.get(ip) || { count: 0, resetAt: now + RATE_WINDOW_MS };
-  if (now > rec.resetAt) {
-    rec.count = 0;
-    rec.resetAt = now + RATE_WINDOW_MS;
+  let rec = ipHits.get(ip);
+  if (!rec || now > rec.resetAt) {
+    rec = { count: 0, resetAt: now + RATE_WINDOW_MS };
   }
   rec.count++;
   ipHits.set(ip, rec);
@@ -50,7 +57,7 @@ function isBlockedHost(hostname) {
   const h = hostname.toLowerCase().replace(/^\[|\]$/g, '');
   if (BLOCKED_HOSTS.has(h)) return true;
   if (isPrivateIPv4(h)) return true;
-  if (h === '::1' || h.startsWith('fc') || h.startsWith('fd')) return true;
+  if (h === '::1' || /^fc[0-9a-f]{2}:/i.test(h) || /^fd[0-9a-f]{2}:/i.test(h) || h === 'fe80:') return true;
   return false;
 }
 
@@ -81,7 +88,7 @@ router.post('/scan', rateLimit, async (req, res) => {
     let parsedUrl;
     try {
       parsedUrl = new URL(cleanUrl);
-      if (!/^[a-z0-9.\-:[\]]+$/i.test(parsedUrl.hostname)) {
+      if (!HOSTNAME_RE.test(parsedUrl.hostname)) {
         return res.status(400).json({ success: false, message: 'Invalid hostname' });
       }
       if (isBlockedHost(parsedUrl.hostname)) {
@@ -97,12 +104,12 @@ router.post('/scan', rateLimit, async (req, res) => {
     try {
       const explanationData = await aiExplanationService.generateExplanation(cleanUrl, detectionResult);
       aiExplanation = {
-        text: explanationData.explanation,
-        generated_by: explanationData.generated_by || 'System',
+        text: String(explanationData.explanation || '').slice(0, 4000),
+        generated_by: String(explanationData.generated_by || 'System').slice(0, 100),
         safety_tips: aiExplanationService.generateSafetyTips(detectionResult.result)
       };
     } catch (error) {
-      console.error('AI explanation error:', error.message);
+      console.error('AI explanation error:', error?.message || 'unknown');
     }
 
     const record = {
@@ -119,20 +126,11 @@ router.post('/scan', rateLimit, async (req, res) => {
     res.status(200).json({
       success: true,
       message: 'URL scanned successfully',
-      data: {
-        ...record,
-        ai_explanation: aiExplanation,
-        api_status: {
-          googleSafeBrowsing: !!process.env.GOOGLE_SAFE_BROWSING_API_KEY,
-          virusTotal: !!process.env.VIRUSTOTAL_API_KEY,
-          urlScan: !!process.env.URLSCAN_API_KEY,
-          cerebras: !!process.env.CEREBRAS_API_KEY
-        }
-      }
+      data: { ...record, ai_explanation: aiExplanation }
     });
 
   } catch (error) {
-    console.error('Scan error:', error);
+    console.error('Scan error:', error?.message || 'unknown');
     res.status(500).json({ success: false, message: 'Error scanning URL' });
   }
 });
@@ -140,7 +138,7 @@ router.post('/scan', rateLimit, async (req, res) => {
 router.get('/urlscan/:scanId', async (req, res) => {
   try {
     const { scanId } = req.params;
-    if (typeof scanId !== 'string' || scanId.length > 256) {
+    if (typeof scanId !== 'string' || !UUID_RE.test(scanId)) {
       return res.status(400).json({ success: false, message: 'Invalid scan ID' });
     }
 
@@ -155,7 +153,7 @@ router.get('/urlscan/:scanId', async (req, res) => {
     res.status(200).json({ success: true, message: 'URLScan.io results retrieved successfully', data: results });
 
   } catch (error) {
-    console.error('URLScan results error:', error);
+    console.error('URLScan results error:', error?.message || 'unknown');
     res.status(500).json({ success: false, message: 'Error retrieving URLScan.io results' });
   }
 });
@@ -163,9 +161,9 @@ router.get('/urlscan/:scanId', async (req, res) => {
 router.get('/history', (req, res) => {
   try {
     const scans = getScans();
-    const { limit = 50, page = 1, result } = req.query;
-    const pageNum = Math.max(1, parseInt(page) || 1);
-    const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 50));
+    const { limit, page, result } = req.query;
+    const pageNum = Math.max(1, parseInt(page, 10) || 1);
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 50));
 
     let filtered = scans;
     if (result && ['Legit', 'Suspicious', 'Phishing'].includes(result)) {
@@ -184,7 +182,7 @@ router.get('/history', (req, res) => {
     });
 
   } catch (error) {
-    console.error('History error:', error);
+    console.error('History error:', error?.message || 'unknown');
     res.status(500).json({ success: false, message: 'Error retrieving scan history' });
   }
 });
@@ -204,15 +202,20 @@ router.get('/stats', (req, res) => {
     };
 
     const sevenDaysAgo = new Date(Date.now() - 7 * 86400000);
-    const recentScans = scans.filter(s => new Date(s.created_at) >= sevenDaysAgo).length;
+    const recentScans = scans.filter(s => {
+      const t = new Date(s.created_at).getTime();
+      return !Number.isNaN(t) && t >= sevenDaysAgo.getTime();
+    }).length;
 
     const totalDuration = scans.reduce((a, s) => a + (Number(s.scan_duration) || 0), 0);
-    const avgScanDuration = totalScans > 0
-      ? +(totalDuration / totalScans).toFixed(2)
-      : 0;
+    const avgScanDuration = totalScans > 0 ? +(totalDuration / totalScans).toFixed(2) : 0;
 
-    const riskFactorCount = {};
-    scans.forEach(s => (s.meta_data?.risk_factors || []).forEach(f => { riskFactorCount[f] = (riskFactorCount[f] || 0) + 1; }));
+    const riskFactorCount = Object.create(null);
+    scans.forEach(s => (s.meta_data?.risk_factors || []).forEach(f => {
+      if (typeof f === 'string' && f.length <= 200) {
+        riskFactorCount[f] = (riskFactorCount[f] || 0) + 1;
+      }
+    }));
     const topRiskFactors = Object.entries(riskFactorCount)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 5)
@@ -224,7 +227,7 @@ router.get('/stats', (req, res) => {
     });
 
   } catch (error) {
-    console.error('Stats error:', error);
+    console.error('Stats error:', error?.message || 'unknown');
     res.status(500).json({ success: false, message: 'Error retrieving statistics' });
   }
 });
@@ -232,6 +235,9 @@ router.get('/stats', (req, res) => {
 router.delete('/history/:id', (req, res) => {
   try {
     const { id } = req.params;
+    if (typeof id !== 'string' || id.length > 64 || !/^[a-z0-9]+$/i.test(id)) {
+      return res.status(400).json({ success: false, message: 'Invalid ID' });
+    }
     const deleted = deleteScanById(id);
     if (!deleted) {
       return res.status(404).json({ success: false, message: 'Scan record not found' });
@@ -239,7 +245,7 @@ router.delete('/history/:id', (req, res) => {
     res.status(200).json({ success: true, message: 'Scan record deleted successfully', data: deleted });
 
   } catch (error) {
-    console.error('Delete error:', error);
+    console.error('Delete error:', error?.message || 'unknown');
     res.status(500).json({ success: false, message: 'Error deleting scan record' });
   }
 });
@@ -250,7 +256,7 @@ router.delete('/history', (req, res) => {
     res.status(200).json({ success: true, message: 'All scan history cleared successfully', data: { deletedCount } });
 
   } catch (error) {
-    console.error('Clear history error:', error);
+    console.error('Clear history error:', error?.message || 'unknown');
     res.status(500).json({ success: false, message: 'Error clearing scan history' });
   }
 });

@@ -15,12 +15,9 @@ const Analytics = () => {
     setLoading(true);
     try {
       const response = await getStats();
-      
-      if (response.success) {
-        setStats(response.data);
-      }
-    } catch (error) {
-      console.error('Failed to fetch stats:', error);
+      if (response.success) setStats(response.data);
+    } catch {
+      // silent
     } finally {
       setLoading(false);
     }

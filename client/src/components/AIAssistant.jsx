@@ -40,38 +40,35 @@ const AIAssistant = () => {
       timestamp: new Date()
     };
 
-    setMessages(prev => [...prev, userMessage]);
     const currentInput = input;
     setInput('');
     setIsLoading(true);
 
-    try {
-      console.log('📤 Sending message to AI:', currentInput);
-
-      const response = await aiChat(currentInput, messages.slice(-6));
-
-      console.log('✅ AI Response received:', response);
-
-      const assistantMessage = {
-        role: 'assistant',
-        content: response.reply,
-        timestamp: new Date()
-      };
-
-      setMessages(prev => [...prev, assistantMessage]);
-    } catch (error) {
-      console.error('❌ AI Assistant error:', error);
-      console.error('Error details:', error.response?.data || error.message);
-
-      const errorMessage = {
-        role: 'assistant',
-        content: error.response?.data?.error || '⚠️ Sorry, I encountered an error. Please try again or check your connection.',
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, errorMessage]);
-    } finally {
-      setIsLoading(false);
-    }
+    setMessages(prev => {
+      const updated = [...prev, userMessage];
+      const history = updated.slice(-7, -1);
+      (async () => {
+        try {
+          const response = await aiChat(currentInput, history);
+          const assistantMessage = {
+            role: 'assistant',
+            content: response?.reply || 'Sorry, I could not generate a response.',
+            timestamp: new Date()
+          };
+          setMessages(curr => [...curr, assistantMessage]);
+        } catch (error) {
+          const errorMessage = {
+            role: 'assistant',
+            content: error.response?.data?.error || '⚠️ Sorry, I encountered an error. Please try again or check your connection.',
+            timestamp: new Date()
+          };
+          setMessages(curr => [...curr, errorMessage]);
+        } finally {
+          setIsLoading(false);
+        }
+      })();
+      return updated;
+    });
   };
 
   const handleKeyPress = (e) => {

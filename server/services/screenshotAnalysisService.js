@@ -153,7 +153,7 @@ class ScreenshotAnalysisService {
       };
 
     } catch (error) {
-      console.error('❌ Screenshot analysis error:', error);
+      console.error('❌ Screenshot analysis error:', error?.message || 'unknown');
       return {
         success: false,
         error: 'Screenshot analysis failed',
@@ -186,7 +186,7 @@ class ScreenshotAnalysisService {
 
       return processedBuffer;
     } catch (error) {
-      console.error('Image preprocessing error:', error);
+      console.error('Image preprocessing error:', error?.message || 'unknown');
       throw error;
     }
   }
@@ -218,7 +218,7 @@ class ScreenshotAnalysisService {
         confidence: data.confidence
       };
     } catch (error) {
-      console.error('OCR error:', error);
+      console.error('OCR error:', error?.message || 'unknown');
       return { text: '', confidence: 0 };
     }
   }
@@ -386,7 +386,7 @@ class ScreenshotAnalysisService {
       };
 
     } catch (error) {
-      console.error('Visual analysis error:', error);
+      console.error('Visual analysis error:', error?.message || 'unknown');
       return {
         width: 0,
         height: 0,

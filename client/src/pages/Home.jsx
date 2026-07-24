@@ -23,7 +23,7 @@ const Home = () => {
       }
     } catch (err) {
       setError(
-        err.response?.data?.message || 
+        err.response?.data?.message ||
         'Failed to scan URL. Please check your connection and try again.'
       );
     } finally {

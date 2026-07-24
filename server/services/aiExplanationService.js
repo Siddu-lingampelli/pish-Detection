@@ -25,7 +25,7 @@ class AIExplanationService {
         model: 'gpt-oss-120b'
       };
     } catch (error) {
-      console.error('Cerebras explanation error:', error.message);
+      console.error('Cerebras explanation error:', error?.message || 'unknown');
       return {
         explanation: this.basicExplanation(url, detectionResult),
         generated_by: 'Fallback',

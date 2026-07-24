@@ -32,16 +32,10 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      const response = await login(formData);
-
-      // Save token and user info
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
-
-      // Redirect to scanner
+      await login(formData);
       navigate('/scanner');
     } catch (err) {
-      setError(err.response?.data?.error || 'Login failed. Please check your credentials.');
+      setError(err.response?.data?.error || err.message || 'Login failed. Please check your credentials.');
     } finally {
       setIsLoading(false);
     }

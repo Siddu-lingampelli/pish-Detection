@@ -34,7 +34,7 @@ router.post('/chat', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ AI Assistant error:', error.message);
+    console.error('❌ AI Assistant error:', error?.message || 'unknown');
     res.status(500).json({
       error: 'Failed to process your question. Please try again.'
     });

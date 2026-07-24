@@ -44,7 +44,7 @@ Always be helpful, clear, and focus on education over fear.`;
       return safe;
 
     } catch (error) {
-      console.error('Cerebras assistant error:', error.response?.data || error.message);
+      console.error('Cerebras assistant error:', error?.response?.status || error?.message || 'unknown');
       return this.getFallbackResponse(userMessage);
     }
   }

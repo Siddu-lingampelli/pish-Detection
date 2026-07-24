@@ -146,7 +146,7 @@ Respond ONLY with valid JSON (no markdown):
         analysis: typeof raw.analysis === 'string' ? raw.analysis.slice(0, 5000) : ''
       };
     } catch (error) {
-      console.error('Cerebras email analysis error:', error.response?.data || error.message);
+      console.error('Cerebras email analysis error:', error?.response?.status || error?.message || 'unknown');
       return null;
     }
   }

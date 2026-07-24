@@ -17,6 +17,13 @@ const loginAttempts = new Map();
 const MAX_LOGIN_ATTEMPTS = 5;
 const LOGIN_WINDOW_MS = 15 * 60 * 1000;
 
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, rec] of loginAttempts) {
+    if (now - rec.firstAt > LOGIN_WINDOW_MS) loginAttempts.delete(ip);
+  }
+}, 5 * 60 * 1000).unref();
+
 function checkLoginRateLimit(ip) {
   const now = Date.now();
   const record = loginAttempts.get(ip) || { count: 0, firstAt: now };
@@ -69,14 +76,14 @@ router.post('/register', async (req, res) => {
     res.status(201).json({ success: true, token, user: { id: user._id, name: user.name, email: user.email } });
 
   } catch (error) {
-    console.error('Registration error:', error);
+    console.error('Registration error:', error?.message || 'unknown');
     res.status(500).json({ error: 'Registration failed' });
   }
 });
 
 router.post('/login', async (req, res) => {
   try {
-    const ip = req.ip || req.headers['x-forwarded-for'] || 'unknown';
+    const ip = req.ip || 'unknown';
     if (!checkLoginRateLimit(ip)) {
       return res.status(429).json({ error: 'Too many login attempts. Try again later.' });
     }
@@ -105,7 +112,7 @@ router.post('/login', async (req, res) => {
     res.json({ success: true, token, user: { id: user._id, name: user.name, email: user.email } });
 
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('Login error:', error?.message || 'unknown');
     res.status(500).json({ error: 'Login failed' });
   }
 });
@@ -118,7 +125,7 @@ router.get('/me', requireAuth, (req, res) => {
     res.json({ success: true, user: { id: user._id, name: user.name, email: user.email } });
 
   } catch (error) {
-    console.error('Auth verification error:', error);
+    console.error('Auth verification error:', error?.message || 'unknown');
     res.status(500).json({ error: 'Failed to fetch user' });
   }
 });

@@ -3,6 +3,7 @@ import path from 'path';
 
 const DATA_DIR = process.env.DATA_DIR || path.join(process.cwd(), 'data');
 const DATA_FILE = path.join(DATA_DIR, 'store.json');
+const BACKUP_FILE = DATA_FILE + '.bak';
 
 function ensureDir() {
   try {
@@ -13,25 +14,33 @@ function ensureDir() {
 }
 
 function read() {
-  try {
-    if (!fs.existsSync(DATA_FILE)) return { users: [], scans: [] };
-    const raw = fs.readFileSync(DATA_FILE, 'utf8');
-    const parsed = JSON.parse(raw);
-    return {
-      users: Array.isArray(parsed.users) ? parsed.users : [],
-      scans: Array.isArray(parsed.scans) ? parsed.scans : []
-    };
-  } catch (e) {
-    console.error('Store read error:', e.message);
-    return { users: [], scans: [] };
+  for (const file of [DATA_FILE, BACKUP_FILE]) {
+    try {
+      if (!fs.existsSync(file)) continue;
+      const raw = fs.readFileSync(file, 'utf8');
+      if (!raw.trim()) continue;
+      const parsed = JSON.parse(raw);
+      return {
+        users: Array.isArray(parsed.users) ? parsed.users : [],
+        scans: Array.isArray(parsed.scans) ? parsed.scans : []
+      };
+    } catch (e) {
+      console.error(`Store read error from ${path.basename(file)}:`, e.message);
+    }
   }
+  return { users: [], scans: [] };
 }
 
 let cache = null;
 let writeTimer = null;
+let writing = false;
+let pending = false;
 
 function scheduleWrite() {
-  if (writeTimer) return;
+  if (writeTimer) {
+    pending = true;
+    return;
+  }
   writeTimer = setTimeout(() => {
     writeTimer = null;
     flush();
@@ -39,14 +48,28 @@ function scheduleWrite() {
 }
 
 function flush() {
-  if (!cache) return;
+  if (!cache || writing) {
+    if (cache) pending = true;
+    return;
+  }
+  writing = true;
   try {
     ensureDir();
     const tmp = DATA_FILE + '.tmp';
-    fs.writeFileSync(tmp, JSON.stringify(cache));
+    const json = JSON.stringify(cache);
+    fs.writeFileSync(tmp, json);
+    if (fs.existsSync(DATA_FILE)) {
+      try { fs.copyFileSync(DATA_FILE, BACKUP_FILE); } catch {}
+    }
     fs.renameSync(tmp, DATA_FILE);
   } catch (e) {
     console.error('Store write error:', e.message);
+  } finally {
+    writing = false;
+    if (pending) {
+      pending = false;
+      scheduleWrite();
+    }
   }
 }
 
@@ -105,6 +128,5 @@ export function deleteScanById(id) {
   return deleted;
 }
 
-process.on('SIGTERM', flush);
-process.on('SIGINT', flush);
-process.on('beforeExit', flush);
+process.on('SIGTERM', () => { flush(); process.exit(0); });
+process.on('SIGINT', () => { flush(); process.exit(0); });

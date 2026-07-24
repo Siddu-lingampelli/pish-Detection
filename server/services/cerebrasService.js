@@ -9,9 +9,9 @@ class CerebrasService {
     this.apiKey = process.env.CEREBRAS_API_KEY;
     this.enabled = !!this.apiKey;
     if (this.enabled) {
-      console.log('✅ Cerebras AI enabled (gpt-oss-120b + gemma-4-31b)');
+      console.log('✅ Cerebras AI enabled');
     } else {
-      console.log('⚠️ Cerebras AI not configured (CEREBRAS_API_KEY missing)');
+      console.log('⚠️ Cerebras AI not configured');
     }
   }
 

@@ -45,20 +45,14 @@ const Register = () => {
     setIsLoading(true);
 
     try {
-      const response = await register({
+      await register({
         name: formData.name,
         email: formData.email,
         password: formData.password
       });
-
-      // Save token and user info
-      localStorage.setItem('token', response.data.token);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
-
-      // Redirect to scanner
       navigate('/scanner');
     } catch (err) {
-      setError(err.response?.data?.error || 'Registration failed. Please try again.');
+      setError(err.response?.data?.error || err.message || 'Registration failed. Please try again.');
     } finally {
       setIsLoading(false);
     }

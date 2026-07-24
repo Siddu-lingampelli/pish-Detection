@@ -2,25 +2,18 @@ import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { FaShieldAlt, FaLink, FaHistory, FaChartBar, FaQrcode } from 'react-icons/fa';
 import { FiLogOut, FiUser } from 'react-icons/fi';
+import { getToken, getUser, clearAuth } from '../services/api';
 
 const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  let user = null;
-  try {
-    user = JSON.parse(localStorage.getItem('user') || 'null');
-  } catch {
-    user = null;
-  }
-  const isAuthenticated = !!localStorage.getItem('token');
+  const user = getUser();
+  const isAuthenticated = !!getToken();
 
-  const isActive = (path) => {
-    return location.pathname === path;
-  };
+  const isActive = (path) => location.pathname === path;
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    clearAuth();
     navigate('/');
   };
 

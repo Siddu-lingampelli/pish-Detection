@@ -64,7 +64,7 @@ Respond in this JSON format:
 
       return analysis;
     } catch (error) {
-      console.error('❌ Cerebras vision error:', error.response?.data || error.message);
+      console.error('❌ Cerebras vision error:', error?.response?.status || error?.message || 'unknown');
       return null;
     }
   }

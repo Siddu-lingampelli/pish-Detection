@@ -51,15 +51,9 @@ const ScreenshotAnalyzer = () => {
     setError(null);
 
     try {
-      console.log('📤 Uploading screenshot for analysis...');
-
       const response = await analyzeScreenshot(selectedFile);
-
-      console.log('✅ Screenshot analysis response:', response);
-      setResult(response.data);
-
+      setResult(response?.data || response);
     } catch (err) {
-      console.error('❌ Screenshot analysis error:', err);
       setError(err.response?.data?.error || 'Failed to analyze screenshot. Please try again.');
     } finally {
       setAnalyzing(false);

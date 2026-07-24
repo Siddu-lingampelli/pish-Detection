@@ -67,13 +67,13 @@ router.post('/analyze', (req, res, next) => {
       }
     });
 
-  } catch (error) {
-    console.error('Screenshot analysis route error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to analyze screenshot'
-    });
-  }
+    } catch (error) {
+        console.error('Screenshot analysis route error:', error?.message || 'unknown');
+        res.status(500).json({
+            success: false,
+            error: 'Failed to analyze screenshot'
+        });
+    }
 });
 
 /**

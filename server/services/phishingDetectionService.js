@@ -34,33 +34,27 @@ const LEGITIMATE_BRANDS = [
 ];
 
 /**
- * Calculate Levenshtein distance between two strings
+ * Calculate Levenshtein distance between two strings (memory-efficient)
  */
 function levenshteinDistance(str1, str2) {
   const len1 = str1.length;
   const len2 = str2.length;
-  const matrix = [];
+  if (len1 === 0) return len2;
+  if (len2 === 0) return len1;
 
-  for (let i = 0; i <= len1; i++) {
-    matrix[i] = [i];
-  }
-
-  for (let j = 0; j <= len2; j++) {
-    matrix[0][j] = j;
-  }
+  let prev = new Array(len2 + 1);
+  let curr = new Array(len2 + 1);
+  for (let j = 0; j <= len2; j++) prev[j] = j;
 
   for (let i = 1; i <= len1; i++) {
+    curr[0] = i;
     for (let j = 1; j <= len2; j++) {
       const cost = str1[i - 1] === str2[j - 1] ? 0 : 1;
-      matrix[i][j] = Math.min(
-        matrix[i - 1][j] + 1,
-        matrix[i][j - 1] + 1,
-        matrix[i - 1][j - 1] + cost
-      );
+      curr[j] = Math.min(prev[j] + 1, curr[j - 1] + 1, prev[j - 1] + cost);
     }
+    [prev, curr] = [curr, prev];
   }
-
-  return matrix[len1][len2];
+  return prev[len2];
 }
 
 class PhishingDetectionService {
@@ -144,7 +138,7 @@ class PhishingDetectionService {
       return detectionResults;
       
     } catch (error) {
-      console.error('Detection error:', error.message);
+      console.error('Detection error:', error?.message || 'unknown');
       return {
         result: 'Suspicious',
         confidence_score: 0.5,
@@ -230,8 +224,10 @@ class PhishingDetectionService {
     }
 
     // Check for homograph attacks (look-alike characters)
-    if (/[а-яА-Я]/.test(hostname)) { // Cyrillic characters
-      riskFactors.push('Contains look-alike characters (potential homograph attack)');
+    // Detect non-ASCII characters (Cyrillic, Greek, etc. used to spoof Latin)
+    const hasNonAscii = /[^\x00-\x7F]/.test(hostname);
+    if (hasNonAscii) {
+      riskFactors.push('Contains non-ASCII characters (potential homograph attack)');
       riskScore += 0.4;
     }
 
@@ -262,58 +258,33 @@ class PhishingDetectionService {
     }
 
     for (const brand of LEGITIMATE_BRANDS) {
-      if (cleanDomain === brand) {
-        continue;
-      }
+      if (cleanDomain === brand) continue;
 
       const distance = levenshteinDistance(cleanDomain, brand);
       const maxLength = Math.max(cleanDomain.length, brand.length);
-      const similarity = 1 - (distance / maxLength);
 
-      // If very similar (1-2 character difference), likely typosquatting
-      if (similarity >= 0.7 && distance <= 2) {
-        return {
-          isTyposquatting: true,
-          similarTo: brand,
-          distance: distance
-        };
+      // Close match (1-2 char difference) — catches transpositions, single substitution
+      if (distance <= 2 && distance > 0 && maxLength >= 4) {
+        return { isTyposquatting: true, similarTo: brand, distance };
       }
 
-      // Check for common typosquatting patterns
-      // Double letters: google -> googlee, paypal -> paypall
-      const doubleLetterVariant = cleanDomain.replace(/(.)\1+/g, '$1');
-      if (doubleLetterVariant === brand) {
-        return {
-          isTyposquatting: true,
-          similarTo: brand,
-          distance: 1
-        };
+      // For short brands (3-4 chars), require distance=1 and length match
+      if (maxLength < 4 && distance === 1 && Math.abs(cleanDomain.length - brand.length) <= 1) {
+        return { isTyposquatting: true, similarTo: brand, distance };
       }
 
-      // Missing letters: facebook -> facbook
-      if (brand.includes(cleanDomain) && brand.length - cleanDomain.length === 1) {
-        return {
-          isTyposquatting: true,
-          similarTo: brand,
-          distance: 1
-        };
+      // Substring inclusion: domain contains brand but has extra leading/trailing chars
+      if (cleanDomain.length > brand.length && cleanDomain.includes(brand) && cleanDomain.length - brand.length <= 3) {
+        return { isTyposquatting: true, similarTo: brand, distance: cleanDomain.length - brand.length };
       }
 
-      // Extra letters: amazon -> amazone
-      if (cleanDomain.includes(brand) && cleanDomain.length - brand.length <= 2) {
-        return {
-          isTyposquatting: true,
-          similarTo: brand,
-          distance: 1
-        };
+      // Reverse: brand contains domain — only flag if exactly 1 char missing
+      if (brand.length > cleanDomain.length && brand.includes(cleanDomain) && brand.length - cleanDomain.length === 1) {
+        return { isTyposquatting: true, similarTo: brand, distance: 1 };
       }
     }
 
-    return {
-      isTyposquatting: false,
-      similarTo: null,
-      distance: 0
-    };
+    return { isTyposquatting: false, similarTo: null, distance: 0 };
   }
 
   /**
@@ -385,7 +356,7 @@ class PhishingDetectionService {
       };
 
     } catch (error) {
-      console.error('Google Safe Browsing API error:', error.message);
+      console.error('Google Safe Browsing API error:', error?.response?.status || error?.message || 'unknown');
       return null;
     }
   }
@@ -442,7 +413,7 @@ class PhishingDetectionService {
         console.log('URL not in VirusTotal database, submitting for analysis...');
         await this.submitToVirusTotal(url);
       } else {
-        console.error('VirusTotal API error:', error.message);
+        console.error('VirusTotal API error:', error?.response?.status || error?.message || 'unknown');
       }
       return null;
     }
@@ -474,7 +445,7 @@ class PhishingDetectionService {
       };
 
     } catch (error) {
-      console.error('URLScan.io error:', error.message);
+      console.error('URLScan.io error:', error?.response?.status || error?.message || 'unknown');
       return null;
     }
   }
@@ -500,7 +471,7 @@ class PhishingDetectionService {
 
       console.log('✅ URL submitted to VirusTotal for analysis');
     } catch (error) {
-      console.error('VirusTotal submission error:', error.message);
+      console.error('VirusTotal submission error:', error?.response?.status || error?.message || 'unknown');
     }
   }
 

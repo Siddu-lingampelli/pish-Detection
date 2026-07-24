@@ -17,13 +17,13 @@ const History = () => {
     try {
       const params = filter !== 'all' ? { result: filter } : {};
       const response = await getHistory(params);
-      
+
       if (response.success) {
         setScans(response.data.scans);
         setPagination(response.data.pagination);
       }
-    } catch (error) {
-      console.error('Failed to fetch history:', error);
+    } catch {
+      // silent — empty state already handles no data
     } finally {
       setLoading(false);
     }
@@ -36,9 +36,9 @@ const History = () => {
 
     try {
       await deleteScan(id);
-      setScans(scans.filter(scan => scan._id !== id));
+      setScans(prev => prev.filter(scan => scan._id !== id));
+      setPagination(prev => ({ ...prev, total: Math.max(0, (prev.total || 1) - 1) }));
     } catch (error) {
-      console.error('Failed to delete scan:', error);
       alert('Failed to delete scan');
     }
   };
@@ -52,8 +52,7 @@ const History = () => {
       await clearHistory();
       setScans([]);
       setPagination({});
-    } catch (error) {
-      console.error('Failed to clear history:', error);
+    } catch {
       alert('Failed to clear history');
     }
   };

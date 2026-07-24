@@ -25,11 +25,9 @@ const EmailScanner = () => {
         senderEmail,
         subject
       });
-
       setResults(response);
     } catch (error) {
-      console.error('Email analysis error:', error);
-      alert('Failed to analyze email. Please try again.');
+      alert(error.response?.data?.error || 'Failed to analyze email. Please try again.');
     } finally {
       setIsAnalyzing(false);
     }

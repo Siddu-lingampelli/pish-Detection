@@ -61,8 +61,8 @@ class URLScanService {
             };
 
         } catch (error) {
-            console.error('❌ URLScan.io submission error:', error.message);
-            
+            console.error('❌ URLScan.io submission error:', error?.response?.status || error?.message || 'unknown');
+
             if (error.response?.status === 429) {
                 return {
                     success: false,
@@ -165,7 +165,7 @@ class URLScanService {
                 };
             }
 
-            console.error('❌ URLScan.io results error:', error.message);
+            console.error('❌ URLScan.io results error:', error?.response?.status || error?.message || 'unknown');
             return {
                 success: false,
                 error: 'Failed to retrieve scan results'

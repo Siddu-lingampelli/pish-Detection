@@ -32,7 +32,7 @@ router.post('/analyze', async (req, res) => {
       return res.status(400).json({ error: 'Subject too long' });
     }
 
-    console.log(`📧 Analyzing email (${emailContent.length} characters)`);
+    console.log(`📧 Analyzing email (${emailContent.length} characters), subject: ${(subject || '').length} chars`);
 
     const analysis = await emailAnalysisService.analyzeEmail(
       emailContent,
@@ -47,7 +47,7 @@ router.post('/analyze', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ Email analysis error:', error);
+    console.error('❌ Email analysis error:', error?.message || 'unknown');
     res.status(500).json({
       error: 'Failed to analyze email'
     });

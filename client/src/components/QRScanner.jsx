@@ -51,15 +51,9 @@ const QRScanner = () => {
     setError(null);
 
     try {
-      console.log('📤 Uploading QR code image...');
-
       const response = await scanQR(selectedFile);
-
-      console.log('✅ QR scan response:', response);
       setResult(response);
-
     } catch (err) {
-      console.error('❌ QR scan error:', err);
       setError(err.response?.data?.error || 'Failed to scan QR code. Please try again.');
     } finally {
       setScanning(false);

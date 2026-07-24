@@ -67,17 +67,20 @@ router.post('/scan', (req, res, next) => {
 
         // Step 4: If URL found, run full phishing detection
         if (extractedURL) {
-            console.log('🌐 URL extracted, running phishing detection...');
-            phishingResult = await phishingDetectionService.detectPhishing(extractedURL);
-            
-            // Generate AI explanation if Cerebras is enabled
-            if (process.env.CEREBRAS_API_KEY) {
-                try {
-                    aiExplanation = await aiExplanationService.generateExplanation(extractedURL, phishingResult);
-                    console.log('🤖 AI explanation generated');
-                } catch (aiError) {
-                    console.error('⚠️ AI explanation failed:', aiError.message);
+            if (extractedURL.startsWith('http://') || extractedURL.startsWith('https://')) {
+                console.log('🌐 URL extracted, running phishing detection...');
+                phishingResult = await phishingDetectionService.detectPhishing(extractedURL);
+
+                if (process.env.CEREBRAS_API_KEY) {
+                    try {
+                        aiExplanation = await aiExplanationService.generateExplanation(extractedURL, phishingResult);
+                        console.log('🤖 AI explanation generated');
+                    } catch (aiError) {
+                        console.error('⚠️ AI explanation failed:', aiError?.message || 'unknown');
+                    }
                 }
+            } else {
+                console.log('ℹ️ Non-HTTP scheme extracted, skipping URL scan:', extractedURL.slice(0, 20));
             }
         }
 
@@ -113,7 +116,7 @@ router.post('/scan', (req, res, next) => {
         res.json(response);
 
     } catch (error) {
-        console.error('❌ QR scan error:', error.message);
+        console.error('❌ QR scan error:', error?.message || 'unknown');
         res.status(500).json({
             success: false,
             error: 'Failed to process QR code'
