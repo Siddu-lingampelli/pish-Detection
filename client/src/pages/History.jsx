@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { getHistory, deleteScan, clearHistory } from '../services/api';
-import { FaTrash, FaSpinner, FaCheckCircle, FaExclamationTriangle, FaTimesCircle, FaFilter } from 'react-icons/fa';
 
 const History = () => {
   const [scans, setScans] = useState([]);
@@ -8,219 +7,114 @@ const History = () => {
   const [filter, setFilter] = useState('all');
   const [pagination, setPagination] = useState({});
 
-  useEffect(() => {
-    fetchHistory();
-  }, [filter]);
+  useEffect(() => { fetchHistory(); }, [filter]);
 
   const fetchHistory = async () => {
     setLoading(true);
     try {
       const params = filter !== 'all' ? { result: filter } : {};
       const response = await getHistory(params);
-
       if (response.success) {
         setScans(response.data.scans);
         setPagination(response.data.pagination);
       }
-    } catch {
-      // silent — empty state already handles no data
-    } finally {
-      setLoading(false);
-    }
+    } catch {} finally { setLoading(false); }
   };
 
-  const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this scan?')) {
-      return;
-    }
-
+  const onDelete = async (id) => {
+    if (!confirm('Delete this scan?')) return;
     try {
       await deleteScan(id);
-      setScans(prev => prev.filter(scan => scan._id !== id));
+      setScans(prev => prev.filter(s => s._id !== id));
       setPagination(prev => ({ ...prev, total: Math.max(0, (prev.total || 1) - 1) }));
-    } catch (error) {
-      alert('Failed to delete scan');
-    }
+    } catch { alert('Delete failed'); }
   };
 
-  const handleClearAll = async () => {
-    if (!window.confirm('Are you sure you want to clear all scan history? This action cannot be undone.')) {
-      return;
-    }
-
-    try {
-      await clearHistory();
-      setScans([]);
-      setPagination({});
-    } catch {
-      alert('Failed to clear history');
-    }
-  };
-
-  const getResultIcon = (result) => {
-    switch (result) {
-      case 'Legit':
-        return <FaCheckCircle className="text-emerald-400" />;
-      case 'Suspicious':
-        return <FaExclamationTriangle className="text-yellow-400" />;
-      case 'Phishing':
-        return <FaTimesCircle className="text-red-400" />;
-      default:
-        return null;
-    }
-  };
-
-  const getResultBadge = (result) => {
-    const styles = {
-      Legit: 'bg-emerald-900/20 border border-emerald-800 text-emerald-400',
-      Suspicious: 'bg-yellow-900/20 border border-yellow-800 text-yellow-400',
-      Phishing: 'bg-red-900/20 border border-red-800 text-red-400',
-    };
-
-    return (
-      <span className={`px-3 py-1 rounded text-xs font-semibold uppercase tracking-wider ${styles[result]}`}>
-        {result}
-      </span>
-    );
+  const onClearAll = async () => {
+    if (!confirm('Clear all scan history?')) return;
+    try { await clearHistory(); setScans([]); setPagination({}); }
+    catch { alert('Clear failed'); }
   };
 
   return (
-    <div className="min-h-screen py-8">
-      <div className="container mx-auto px-4 max-w-6xl">
-        {/* Header */}
-        <div className="bg-[#111111] border border-gray-800 rounded-lg p-8 mb-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-3xl font-bold text-white tracking-tight mb-2">Scan History</h1>
-              <p className="text-gray-400">
-                {pagination.total || 0} total scans recorded
-              </p>
-            </div>
-            {scans.length > 0 && (
-              <button
-                onClick={handleClearAll}
-                className="bg-red-900/20 hover:bg-red-900/30 border border-red-800 text-red-400 px-4 py-2 rounded-lg font-semibold transition flex items-center space-x-2"
-              >
-                <FaTrash />
-                <span>Clear All</span>
-              </button>
-            )}
-          </div>
-        </div>
+    <div style={{ background: 'var(--bone)', minHeight: 'calc(100vh - 56px)' }}>
+      <div style={{ borderBottom: '1px solid var(--ink-08)', padding: '10px 24px', display: 'flex', justifyContent: 'space-between' }} className="t-mono">
+        <div style={{ fontSize: 10, letterSpacing: '0.15em', color: 'var(--ink-60)' }}>§CONSOLE / SCAN LOG</div>
+        <div style={{ fontSize: 10, letterSpacing: '0.1em' }}><span className="blink" style={{ color: 'var(--signal)' }}>●</span> STREAMING</div>
+      </div>
 
-        {/* Filters */}
-        <div className="bg-[#111111] border border-gray-800 rounded-lg p-6 mb-6">
-          <div className="flex items-center space-x-2 mb-4">
-            <FaFilter className="text-gray-400" />
-            <span className="text-xs uppercase tracking-wider font-semibold text-gray-400">Filter by Result</span>
-          </div>
-          <div className="flex space-x-3">
-            {['all', 'Legit', 'Suspicious', 'Phishing'].map((filterOption) => (
-              <button
-                key={filterOption}
-                onClick={() => setFilter(filterOption)}
-                className={`px-4 py-2 rounded-lg font-medium transition ${
-                  filter === filterOption
-                    ? 'bg-white text-black'
-                    : 'bg-black/30 border border-gray-800 text-gray-400 hover:bg-black/50 hover:text-white'
-                }`}
-              >
-                {filterOption === 'all' ? 'All Scans' : filterOption}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Loading State */}
-        {loading && (
-          <div className="bg-[#111111] border border-gray-800 rounded-lg text-center py-12">
-            <FaSpinner className="animate-spin text-4xl text-white mx-auto mb-4" />
-            <p className="text-gray-400">Loading scan history...</p>
-          </div>
-        )}
-
-        {/* Empty State */}
-        {!loading && scans.length === 0 && (
-          <div className="bg-[#111111] border border-gray-800 rounded-lg text-center py-12">
-            <div className="text-6xl mb-4 opacity-50">📋</div>
-            <h3 className="text-xl font-bold text-white mb-2">No Scans Yet</h3>
-            <p className="text-gray-400">
-              {filter !== 'all' 
-                ? `No ${filter} scans found. Try a different filter.`
-                : 'Start scanning URLs to see your history here.'}
+      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '40px 24px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 32 }}>
+          <div>
+            <div className="t-eyebrow" style={{ marginBottom: 8 }}>§LOG</div>
+            <h1 className="h-display" style={{ fontSize: 48, margin: 0 }}>Scan history</h1>
+            <p className="t-mono" style={{ fontSize: 12, color: 'var(--ink-60)', marginTop: 8 }}>
+              {pagination.total || 0} records in local store
             </p>
           </div>
-        )}
+          {scans.length > 0 && (
+            <button onClick={onClearAll} className="btn-ghost" style={{ borderColor: 'var(--signal)', color: 'var(--signal)' }}>
+              CLEAR ALL
+            </button>
+          )}
+        </div>
 
-        {/* Scan List */}
-        {!loading && scans.length > 0 && (
-          <div className="space-y-4">
-            {scans.map((scan) => (
-              <div key={scan._id} className="bg-[#111111] border border-gray-800 rounded-lg p-6 hover:border-gray-700 transition">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start space-x-4 flex-1">
-                    <div className="text-3xl mt-1">
-                      {getResultIcon(scan.result)}
-                    </div>
+        <div style={{ display: 'flex', gap: 0, border: '1px solid var(--ink)', marginBottom: 24 }}>
+          {['all', 'Legit', 'Suspicious', 'Phishing'].map((f, i) => (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              style={{
+                flex: 1,
+                padding: '12px 16px',
+                fontFamily: 'var(--type-display)',
+                fontWeight: 600,
+                fontSize: 12,
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                background: filter === f ? 'var(--ink)' : 'transparent',
+                color: filter === f ? 'var(--bone)' : 'var(--ink)',
+                borderRight: i < 3 ? '1px solid var(--ink)' : 0,
+                transition: 'all 120ms'
+              }}
+            >
+              {f === 'all' ? 'All' : f}
+            </button>
+          ))}
+        </div>
 
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-3 mb-3">
-                        {getResultBadge(scan.result)}
-                        <span className="text-xs uppercase tracking-wider text-gray-500">
-                          {(scan.confidence_score * 100).toFixed(1)}% confidence
-                        </span>
-                      </div>
+        {loading && <div className="t-mono" style={{ textAlign: 'center', padding: 40, color: 'var(--ink-60)' }}>LOADING...</div>}
 
-                      <p className="text-sm font-mono text-white bg-black/50 p-3 rounded border border-gray-800 mb-4 break-all">
-                        {scan.url}
-                      </p>
-
-                      <div className="flex flex-wrap gap-4 text-sm text-gray-400">
-                        <div>
-                          <span className="text-gray-500">SSL:</span>{' '}
-                          {scan.meta_data?.has_ssl ? '✓ Yes' : '✗ No'}
-                        </div>
-                        <div>
-                          <span className="text-gray-500">Duration:</span>{' '}
-                          {scan.scan_duration}ms
-                        </div>
-                        <div>
-                          <span className="text-gray-500">Scanned:</span>{' '}
-                          {new Date(scan.created_at).toLocaleString()}
-                        </div>
-                      </div>
-
-                      {scan.meta_data?.risk_factors && scan.meta_data.risk_factors.length > 0 && (
-                        <div className="mt-4">
-                          <details className="text-sm">
-                            <summary className="cursor-pointer text-gray-300 font-medium hover:text-white transition">
-                              {scan.meta_data.risk_factors.length} Risk Factor(s)
-                            </summary>
-                            <ul className="mt-3 space-y-2 ml-4">
-                              {scan.meta_data.risk_factors.map((factor, index) => (
-                                <li key={index} className="text-gray-400 flex items-start gap-2">
-                                  <span className="text-red-400">•</span> {factor}
-                                </li>
-                              ))}
-                            </ul>
-                          </details>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => handleDelete(scan._id)}
-                    className="text-red-400 hover:text-red-300 p-2 hover:bg-red-900/20 rounded transition"
-                    title="Delete scan"
-                  >
-                    <FaTrash />
-                  </button>
-                </div>
-              </div>
-            ))}
+        {!loading && scans.length === 0 && (
+          <div className="panel" style={{ padding: 60, textAlign: 'center' }}>
+            <div className="t-eyebrow" style={{ marginBottom: 8 }}>§EMPTY</div>
+            <div className="h-display-2" style={{ fontSize: 20 }}>No scans match this filter</div>
           </div>
         )}
+
+        <div style={{ border: '1px solid var(--ink)' }}>
+          {scans.map((s, i) => {
+            const tone = s.result === 'Phishing' ? 'signal' : s.result === 'Suspicious' ? 'ink' : 'bone';
+            return (
+              <div key={s._id} style={{
+                display: 'grid',
+                gridTemplateColumns: '120px 1fr 140px 100px 60px',
+                alignItems: 'center',
+                padding: '16px 20px',
+                borderTop: i === 0 ? 0 : '1px solid var(--ink-08)',
+                gap: 20
+              }}>
+                <span className={`chip ${tone === 'signal' ? 'chip-signal' : 'chip-mute'}`}>{s.result.toUpperCase()}</span>
+                <div className="t-mono" style={{ fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.url}</div>
+                <div className="t-mono" style={{ fontSize: 11, color: 'var(--ink-60)' }}>
+                  {new Date(s.created_at).toISOString().replace('T', ' ').slice(0, 16)} UTC
+                </div>
+                <div className="t-mono" style={{ fontSize: 11, textAlign: 'right' }}>{s.scan_duration}ms</div>
+                <button onClick={() => onDelete(s._id)} className="t-mono" style={{ fontSize: 11, color: 'var(--ink-60)', textAlign: 'right' }}>DELETE</button>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

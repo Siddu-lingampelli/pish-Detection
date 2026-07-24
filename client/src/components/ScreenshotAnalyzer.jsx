@@ -1,368 +1,190 @@
 import { useState, useRef, useEffect } from 'react';
-import { FaImage, FaUpload, FaCamera, FaTimes, FaCheckCircle, FaExclamationTriangle, FaTimesCircle, FaSpinner } from 'react-icons/fa';
+import { FaUpload, FaTimes } from 'react-icons/fa';
 import { analyzeScreenshot } from '../services/api';
 
 const ScreenshotAnalyzer = () => {
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState(null);
+  const [file, setFile] = useState(null);
+  const [preview, setPreview] = useState(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
-  const fileInputRef = useRef(null);
+  const [drag, setDrag] = useState(false);
+  const inputRef = useRef(null);
 
-  // Cleanup object URL to prevent memory leaks
-  useEffect(() => {
-    return () => {
-      if (previewUrl) {
-        URL.revokeObjectURL(previewUrl);
-      }
-    };
-  }, [previewUrl]);
+  useEffect(() => () => { if (preview) URL.revokeObjectURL(preview); }, [preview]);
 
-  const handleFileSelect = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        setError('Please select an image file');
-        return;
-      }
-
-      // Validate file size (10MB max)
-      if (file.size > 10 * 1024 * 1024) {
-        setError('File size must be less than 10MB');
-        return;
-      }
-
-      setSelectedFile(file);
-      setPreviewUrl(URL.createObjectURL(file));
-      setError(null);
-      setResult(null);
-    }
+  const onSelect = (f) => {
+    if (!f) return;
+    if (!f.type.startsWith('image/')) { setError('Image files only'); return; }
+    if (f.size > 10 * 1024 * 1024) { setError('Max 10MB'); return; }
+    setFile(f);
+    setPreview(URL.createObjectURL(f));
+    setError(null);
+    setResult(null);
   };
 
-  const handleAnalyze = async () => {
-    if (!selectedFile) {
-      setError('Please select a screenshot first');
-      return;
-    }
-
+  const onAnalyze = async () => {
+    if (!file) { setError('Select a screenshot first'); return; }
     setAnalyzing(true);
     setError(null);
-
     try {
-      const response = await analyzeScreenshot(selectedFile);
-      setResult(response?.data || response);
+      const data = await analyzeScreenshot(file);
+      setResult(data?.data || data);
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to analyze screenshot. Please try again.');
+      setError(err.response?.data?.error || 'Analysis failed');
     } finally {
       setAnalyzing(false);
     }
   };
 
-  const handleReset = () => {
-    setSelectedFile(null);
-    setPreviewUrl(null);
-    setResult(null);
-    setError(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
-
-  const getRiskColor = (level) => {
-    switch (level) {
-      case 'HIGH': return 'text-red-400';
-      case 'MEDIUM': return 'text-yellow-400';
-      case 'LOW': return 'text-emerald-400';
-      default: return 'text-gray-400';
-    }
-  };
-
-  const getRiskBgColor = (level) => {
-    switch (level) {
-      case 'HIGH': return 'bg-red-900/20 border-red-800';
-      case 'MEDIUM': return 'bg-yellow-900/20 border-yellow-800';
-      case 'LOW': return 'bg-emerald-900/20 border-emerald-800';
-      default: return 'bg-gray-900/20 border-gray-800';
-    }
-  };
-
-  const getRiskIcon = (level) => {
-    switch (level) {
-      case 'HIGH': return <FaTimesCircle className="text-red-400" />;
-      case 'MEDIUM': return <FaExclamationTriangle className="text-yellow-400" />;
-      case 'LOW': return <FaCheckCircle className="text-emerald-400" />;
-      default: return <FaCheckCircle className="text-gray-400" />;
-    }
-  };
+  const reset = () => { setFile(null); setPreview(null); setResult(null); setError(null); if (inputRef.current) inputRef.current.value = ''; };
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <div className="bg-[#111111] border border-gray-800 rounded-lg p-8">
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-8">
-          <FaImage className="text-2xl text-white" />
-          <div>
-            <h2 className="text-2xl font-bold text-white tracking-tight">AI Screenshot Analyzer</h2>
-            <p className="text-gray-400 text-sm">Detect fake login pages and phishing attempts from screenshots</p>
-          </div>
-        </div>
+    <div style={{ background: 'var(--bone)', minHeight: 'calc(100vh - 56px)' }}>
+      <div style={{ borderBottom: '1px solid var(--ink-08)', padding: '10px 24px', display: 'flex', justifyContent: 'space-between' }} className="t-mono">
+        <div style={{ fontSize: 10, letterSpacing: '0.15em', color: 'var(--ink-60)' }}>§CONSOLE / SCREENSHOT</div>
+        <div style={{ fontSize: 10, letterSpacing: '0.1em' }}><span className="blink" style={{ color: 'var(--signal)' }}>●</span> READY</div>
+      </div>
 
-        {/* Upload Section */}
-        {!result && (
-          <div className="mb-6">
+      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '40px 24px' }}>
+        {!result ? (
+          <div className="panel" style={{ padding: 40 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 24 }}>
+              <div>
+                <div className="t-eyebrow" style={{ marginBottom: 8 }}>§IMG — INPUT</div>
+                <h2 className="h-display-2" style={{ fontSize: 28, margin: 0 }}>Upload a screenshot of a suspicious page.</h2>
+              </div>
+              <div className="t-mono" style={{ fontSize: 11, color: 'var(--ink-60)' }}>VISION + OCR · 10MB</div>
+            </div>
+
             <div
-              className={`border-2 border-dashed rounded-lg p-12 text-center transition-all cursor-pointer ${
-                previewUrl 
-                  ? 'border-gray-700 bg-black/30' 
-                  : 'border-gray-800 hover:border-gray-700 bg-black/20'
-              }`}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              {previewUrl ? (
-                <div className="space-y-4">
-                  <img
-                    src={previewUrl}
-                    alt="Screenshot Preview"
-                    className="max-w-full max-h-96 mx-auto rounded-lg border border-gray-800"
-                  />
-                  <p className="text-sm text-gray-400 font-mono">{selectedFile?.name}</p>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleReset();
-                    }}
-                    className="text-red-400 hover:text-red-300 text-sm flex items-center gap-2 mx-auto transition-colors"
-                  >
-                    <FaTimes /> Remove
+              onClick={() => inputRef.current?.click()}
+              onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
+              onDragLeave={() => setDrag(false)}
+              onDrop={(e) => { e.preventDefault(); setDrag(false); onSelect(e.dataTransfer.files?.[0]); }}
+              style={{
+                border: `2px dashed ${drag ? 'var(--ink)' : 'var(--ink-16)'}`,
+                padding: 60,
+                textAlign: 'center',
+                cursor: 'pointer',
+                background: drag ? 'var(--ink-04)' : 'transparent'
+              }}>
+              {preview ? (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+                  <img src={preview} alt="" style={{ maxWidth: '100%', maxHeight: 400, border: '1px solid var(--ink)' }} />
+                  <div className="t-mono" style={{ fontSize: 11, color: 'var(--ink-60)' }}>{file?.name}</div>
+                  <button onClick={(e) => { e.stopPropagation(); reset(); }} className="t-mono" style={{ fontSize: 11, color: 'var(--signal)' }}>
+                    <FaTimes size={10} style={{ marginRight: 6 }} />REMOVE
                   </button>
                 </div>
               ) : (
-                <div className="space-y-4">
-                  <FaUpload className="text-5xl text-gray-600 mx-auto" />
-                  <div>
-                    <p className="text-lg font-medium text-white">
-                      Click to upload screenshot
-                    </p>
-                    <p className="text-sm text-gray-500 mt-2">
-                      JPG, PNG, GIF - Max 10MB
-                    </p>
-                  </div>
-                </div>
+                <>
+                  <FaUpload size={32} style={{ color: 'var(--ink-40)', marginBottom: 16 }} />
+                  <div className="h-display-2" style={{ fontSize: 18 }}>Drop screenshot here or click to upload</div>
+                  <div className="t-mono" style={{ fontSize: 11, color: 'var(--ink-60)', marginTop: 8 }}>OCR + BRAND DETECTION + FORM ANALYSIS</div>
+                </>
               )}
             </div>
+            <input ref={inputRef} type="file" accept="image/*" onChange={(e) => onSelect(e.target.files?.[0])} style={{ display: 'none' }} />
 
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleFileSelect}
-              className="hidden"
-            />
-
-            {/* Analyze Button */}
-            {previewUrl && (
-              <button
-                onClick={handleAnalyze}
-                disabled={analyzing}
-                className={`w-full mt-4 py-3 px-6 rounded-lg font-semibold transition-all ${
-                  analyzing
-                    ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
-                    : 'bg-white text-black hover:bg-gray-200 active:scale-[0.98]'
-                }`}
-              >
-                {analyzing ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <FaSpinner className="animate-spin" />
-                    Analyzing Screenshot...
-                  </span>
-                ) : (
-                  <span className="flex items-center justify-center gap-2">
-                    <FaCamera /> Analyze Screenshot
-                  </span>
-                )}
+            {preview && (
+              <button onClick={onAnalyze} disabled={analyzing} className="btn-primary" style={{ width: '100%', marginTop: 24 }}>
+                {analyzing ? 'ANALYZING...' : 'ANALYZE →'}
               </button>
             )}
+
+            {error && (
+              <div className="t-mono" style={{ marginTop: 16, fontSize: 12, color: 'var(--signal)' }}>! {error}</div>
+            )}
           </div>
+        ) : (
+          <ScreenshotResult result={result} onReset={reset} />
         )}
+      </div>
+    </div>
+  );
+};
 
-        {/* Error Message */}
-        {error && (
-          <div className="mb-6 p-4 bg-red-900/20 border border-red-800 rounded-lg flex items-start gap-3">
-            <FaTimesCircle className="text-red-400 mt-1" />
-            <div>
-              <p className="font-semibold text-red-400">Error</p>
-              <p className="text-red-300/80 text-sm">{error}</p>
-            </div>
+const ScreenshotResult = ({ result, onReset }) => {
+  const a = result.analysis;
+  const tone = a?.riskLevel === 'HIGH' ? 'signal' : a?.riskLevel === 'MEDIUM' ? 'ink' : 'bone';
+
+  return (
+    <div>
+      <div className={`verdict verdict-${tone}`} style={{ flexDirection: 'row' }}>
+        <div style={{ flex: 1, padding: 32 }}>
+          <div className="t-eyebrow" style={{ color: tone === 'bone' ? 'var(--ink-60)' : 'var(--bone-60)' }}>§IMG — VERDICT</div>
+          <h2 className="h-display" style={{ fontSize: 48, margin: '12px 0 0' }}>{a?.riskLevel || 'UNKNOWN'} RISK</h2>
+          <p style={{ marginTop: 12, fontSize: 14, opacity: 0.8 }}>
+            {a?.hasLoginForm ? 'Login form detected in screenshot' : 'No obvious login form detected'}
+          </p>
+        </div>
+        <div style={{ width: 1, background: tone === 'bone' ? 'var(--ink-08)' : 'var(--bone-08)' }} />
+        <div style={{ flex: 1, padding: 32, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, alignContent: 'center' }}>
+          <div>
+            <div className="t-eyebrow" style={{ color: tone === 'bone' ? 'var(--ink-60)' : 'var(--bone-60)' }}>RISK</div>
+            <div style={{ fontFamily: 'var(--type-display)', fontWeight: 700, fontSize: 40, lineHeight: 1, marginTop: 4 }}>{a?.riskScore || 0}<span style={{ fontSize: 14, opacity: 0.6, fontWeight: 500 }}>/100</span></div>
           </div>
-        )}
-
-        {/* Results Section */}
-        {result && (
-          <div className="space-y-4">
-            {/* Screenshot Preview */}
-            {previewUrl && (
-              <div className="bg-black/30 p-4 rounded-lg border border-gray-800">
-                <img
-                  src={previewUrl}
-                  alt="Analyzed Screenshot"
-                  className="max-w-full max-h-64 mx-auto rounded border border-gray-700"
-                />
-              </div>
-            )}
-
-            {/* Overall Risk Assessment */}
-            <div className={`p-8 rounded-lg border ${getRiskBgColor(result.analysis.riskLevel)}`}>
-              <div className="flex items-start gap-6">
-                <div className="text-4xl mt-1">{getRiskIcon(result.analysis.riskLevel)}</div>
-                <div className="flex-1">
-                  <h3 className={`text-3xl font-bold tracking-tight ${getRiskColor(result.analysis.riskLevel)}`}>
-                    {result.analysis.riskLevel} RISK
-                  </h3>
-                  <p className="text-lg text-white font-medium mt-2">
-                    {result.analysis.hasLoginForm ? 'Login form detected in screenshot' : 'No obvious login form detected'}
-                  </p>
-                  <div className="grid grid-cols-2 gap-4 mt-4">
-                    <div>
-                      <p className="text-xs uppercase tracking-wider text-gray-500">Risk Score</p>
-                      <p className={`text-2xl font-bold ${getRiskColor(result.analysis.riskLevel)}`}>
-                        {result.analysis.riskScore}/100
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs uppercase tracking-wider text-gray-500">Confidence</p>
-                      <p className="text-2xl font-bold text-white">
-                        {(result.analysis.confidence * 100).toFixed(0)}%
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Suspicious Elements */}
-            {result.analysis.suspiciousElements.length > 0 && (
-              <div className="bg-[#111111] p-6 rounded-lg border border-gray-800">
-                <h4 className="text-xs uppercase tracking-wider font-semibold text-gray-400 mb-4">Suspicious Elements Detected</h4>
-                <ul className="space-y-2">
-                  {result.analysis.suspiciousElements.map((element, index) => (
-                    <li key={index} className="flex items-start gap-3 text-sm text-gray-300">
-                      <span className="text-red-400 mt-1">•</span>
-                      <span>{element}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* Text Analysis */}
-            {result.analysis.textAnalysis.suspiciousKeywords.length > 0 && (
-              <div className="bg-[#111111] p-6 rounded-lg border border-gray-800">
-                <h4 className="text-xs uppercase tracking-wider font-semibold text-gray-400 mb-4">Suspicious Keywords Found</h4>
-                <div className="flex flex-wrap gap-2">
-                  {result.analysis.textAnalysis.suspiciousKeywords.map((keyword, index) => (
-                    <span
-                      key={index}
-                      className="px-3 py-1 bg-yellow-900/30 border border-yellow-800 text-yellow-400 text-xs rounded"
-                    >
-                      {keyword}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Brand Impersonation */}
-            {result.analysis.brandImpersonation && (
-              <div className={`p-6 rounded-lg border ${
-                result.analysis.brandImpersonation.detected 
-                  ? 'bg-red-900/20 border-red-800' 
-                  : 'bg-[#111111] border-gray-800'
-              }`}>
-                <h4 className="text-xs uppercase tracking-wider font-semibold text-gray-400 mb-3">Brand Detection</h4>
-                <p className="text-sm text-gray-300 mb-2">{result.analysis.brandImpersonation.reason}</p>
-                <div className="flex flex-wrap gap-2 mt-3">
-                  {result.analysis.brandImpersonation.brands.map((brand, index) => (
-                    <span
-                      key={index}
-                      className="px-3 py-1 bg-white/10 border border-gray-700 text-white text-xs rounded capitalize"
-                    >
-                      {brand}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Recommendations */}
-            {result.analysis.recommendations.length > 0 && (
-              <div className="bg-[#111111] p-6 rounded-lg border border-gray-800">
-                <h4 className="text-xs uppercase tracking-wider font-semibold text-gray-400 mb-4">Safety Recommendations</h4>
-                <ul className="space-y-2">
-                  {result.analysis.recommendations.map((rec, index) => (
-                    <li key={index} className="flex items-start gap-3 text-sm text-gray-400">
-                      <span className="text-white mt-1">•</span>
-                      <span>{rec}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* Extracted Text Preview */}
-            {result.analysis.extractedText && (
-              <details className="bg-black/30 p-6 rounded-lg border border-gray-800">
-                <summary className="cursor-pointer text-xs uppercase tracking-wider font-semibold text-gray-400 hover:text-white transition">
-                  View Extracted Text (OCR)
-                </summary>
-                <div className="mt-4 p-4 bg-black/50 rounded border border-gray-800 max-h-64 overflow-y-auto">
-                  <pre className="text-xs text-gray-400 whitespace-pre-wrap font-mono">
-                    {result.analysis.extractedText || 'No text extracted'}
-                  </pre>
-                </div>
-              </details>
-            )}
-
-            {/* Action Button */}
-            <div className="flex gap-3 pt-2">
-              <button
-                onClick={handleReset}
-                className="flex-1 py-3 px-4 bg-white hover:bg-gray-200 text-black rounded-lg font-semibold transition-all active:scale-[0.98]"
-              >
-                Analyze Another Screenshot
-              </button>
-            </div>
+          <div>
+            <div className="t-eyebrow" style={{ color: tone === 'bone' ? 'var(--ink-60)' : 'var(--bone-60)' }}>CONFIDENCE</div>
+            <div style={{ fontFamily: 'var(--type-display)', fontWeight: 700, fontSize: 40, lineHeight: 1, marginTop: 4 }}>{((a?.confidence || 0) * 100).toFixed(0)}%</div>
           </div>
-        )}
-
-        {/* Info Box */}
-        <div className="mt-8 p-6 bg-black/30 border border-gray-800 rounded-lg">
-          <h4 className="text-xs uppercase tracking-wider font-semibold text-gray-400 mb-3">How it works</h4>
-          <ul className="text-sm text-gray-400 space-y-2">
-            <li className="flex items-start gap-3">
-              <span className="text-white mt-0.5">•</span>
-              <span>Upload a screenshot of a suspicious website or login page</span>
-            </li>
-            <li className="flex items-start gap-3">
-              <span className="text-white mt-0.5">•</span>
-              <span>AI extracts text using OCR and analyzes visual elements</span>
-            </li>
-            <li className="flex items-start gap-3">
-              <span className="text-white mt-0.5">•</span>
-              <span>Detects fake login forms, brand impersonation, and phishing patterns</span>
-            </li>
-            <li className="flex items-start gap-3">
-              <span className="text-white mt-0.5">•</span>
-              <span>Identifies urgency tactics and suspicious keywords</span>
-            </li>
-            <li className="flex items-start gap-3">
-              <span className="text-white mt-0.5">•</span>
-              <span>Provides risk score and safety recommendations</span>
-            </li>
-          </ul>
         </div>
       </div>
+
+      {a?.suspiciousElements?.length > 0 && (
+        <div className="panel" style={{ padding: 24, marginTop: 24 }}>
+          <div className="t-eyebrow" style={{ marginBottom: 16 }}>§SUSPICIOUS ELEMENTS — {a.suspiciousElements.length}</div>
+          {a.suspiciousElements.map((s, i) => (
+            <div key={i} className="t-mono" style={{ fontSize: 12, padding: '8px 0', borderTop: i === 0 ? 0 : '1px solid var(--ink-08)' }}>
+              <span style={{ color: 'var(--ink-40)', marginRight: 12 }}>{String(i + 1).padStart(2, '0')}</span>{s}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {a?.textAnalysis?.suspiciousKeywords?.length > 0 && (
+        <div className="panel" style={{ padding: 24, marginTop: 24 }}>
+          <div className="t-eyebrow" style={{ marginBottom: 16 }}>§KEYWORDS DETECTED</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            {a.textAnalysis.suspiciousKeywords.map((k, i) => (
+              <span key={i} className="chip chip-mute">{k}</span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {a?.brandImpersonation && (
+        <div className="panel" style={{ padding: 24, marginTop: 24 }}>
+          <div className="t-eyebrow" style={{ marginBottom: 12 }}>§BRAND DETECTION</div>
+          <p style={{ fontSize: 14, color: 'var(--ink-60)', marginBottom: 12 }}>{a.brandImpersonation.reason}</p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            {a.brandImpersonation.brands?.map((b, i) => (
+              <span key={i} className="chip">{b}</span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {a?.recommendations?.length > 0 && (
+        <div className="panel" style={{ padding: 24, marginTop: 24 }}>
+          <div className="t-eyebrow" style={{ marginBottom: 16 }}>§RECOMMENDATIONS</div>
+          {a.recommendations.map((r, i) => (
+            <div key={i} style={{ padding: '8px 0', fontSize: 14, borderTop: i === 0 ? 0 : '1px solid var(--ink-08)' }}>
+              <span style={{ color: 'var(--signal)', marginRight: 12 }}>→</span>{r}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {a?.extractedText && (
+        <details className="panel" style={{ padding: 24, marginTop: 24 }}>
+          <summary className="t-eyebrow" style={{ cursor: 'pointer' }}>§EXTRACTED TEXT (OCR)</summary>
+          <pre className="t-mono" style={{ fontSize: 11, marginTop: 16, whiteSpace: 'pre-wrap', color: 'var(--ink-60)', maxHeight: 200, overflow: 'auto' }}>{a.extractedText}</pre>
+        </details>
+      )}
+
+      <button onClick={onReset} className="btn-ghost" style={{ width: '100%', marginTop: 24 }}>ANALYZE ANOTHER</button>
     </div>
   );
 };

@@ -1,356 +1,180 @@
 import { useState, useRef, useEffect } from 'react';
-import { FaQrcode, FaUpload, FaCamera, FaTimes, FaCheckCircle, FaExclamationTriangle, FaTimesCircle } from 'react-icons/fa';
+import { FaUpload, FaTimes } from 'react-icons/fa';
 import { scanQR } from '../services/api';
 
 const QRScanner = () => {
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState(null);
+  const [file, setFile] = useState(null);
+  const [preview, setPreview] = useState(null);
   const [scanning, setScanning] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
-  const fileInputRef = useRef(null);
+  const [drag, setDrag] = useState(false);
+  const inputRef = useRef(null);
 
-  // Cleanup object URL to prevent memory leaks
-  useEffect(() => {
-    return () => {
-      if (previewUrl) {
-        URL.revokeObjectURL(previewUrl);
-      }
-    };
-  }, [previewUrl]);
+  useEffect(() => () => { if (preview) URL.revokeObjectURL(preview); }, [preview]);
 
-  const handleFileSelect = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        setError('Please select an image file');
-        return;
-      }
-
-      // Validate file size (10MB max)
-      if (file.size > 10 * 1024 * 1024) {
-        setError('File size must be less than 10MB');
-        return;
-      }
-
-      setSelectedFile(file);
-      setPreviewUrl(URL.createObjectURL(file));
-      setError(null);
-      setResult(null);
-    }
+  const onSelect = (f) => {
+    if (!f) return;
+    if (!f.type.startsWith('image/')) { setError('Image files only'); return; }
+    if (f.size > 10 * 1024 * 1024) { setError('Max 10MB'); return; }
+    setFile(f);
+    setPreview(URL.createObjectURL(f));
+    setError(null);
+    setResult(null);
   };
 
-  const handleScanQR = async () => {
-    if (!selectedFile) {
-      setError('Please select a QR code image first');
-      return;
-    }
-
+  const onScan = async () => {
+    if (!file) { setError('Select a QR image first'); return; }
     setScanning(true);
     setError(null);
-
     try {
-      const response = await scanQR(selectedFile);
-      setResult(response);
+      const data = await scanQR(file);
+      setResult(data);
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to scan QR code. Please try again.');
+      setError(err.response?.data?.error || 'Scan failed');
     } finally {
       setScanning(false);
     }
   };
 
-  const handleReset = () => {
-    setSelectedFile(null);
-    setPreviewUrl(null);
-    setResult(null);
-    setError(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
-
-  const getRiskColor = (level) => {
-    switch (level?.toUpperCase()) {
-      case 'HIGH': return 'text-red-400';
-      case 'MEDIUM': return 'text-yellow-400';
-      case 'LOW-MEDIUM': return 'text-orange-400';
-      case 'LOW': return 'text-emerald-400';
-      default: return 'text-gray-400';
-    }
-  };
-
-  const getRiskBgColor = (level) => {
-    switch (level?.toUpperCase()) {
-      case 'HIGH': return 'bg-red-900/20 border-red-800';
-      case 'MEDIUM': return 'bg-yellow-900/20 border-yellow-800';
-      case 'LOW-MEDIUM': return 'bg-orange-900/20 border-orange-800';
-      case 'LOW': return 'bg-emerald-900/20 border-emerald-800';
-      default: return 'bg-gray-900/20 border-gray-800';
-    }
-  };
-
-  const getRiskIcon = (level) => {
-    switch (level?.toUpperCase()) {
-      case 'HIGH': return <FaTimesCircle className="text-red-400" />;
-      case 'MEDIUM': return <FaExclamationTriangle className="text-yellow-400" />;
-      case 'LOW-MEDIUM': return <FaExclamationTriangle className="text-orange-400" />;
-      case 'LOW': return <FaCheckCircle className="text-emerald-400" />;
-      default: return <FaCheckCircle className="text-gray-400" />;
-    }
-  };
+  const reset = () => { setFile(null); setPreview(null); setResult(null); setError(null); if (inputRef.current) inputRef.current.value = ''; };
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <div className="bg-[#111111] border border-gray-800 rounded-lg p-8">
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-8">
-          <FaQrcode className="text-2xl text-white" />
-          <div>
-            <h2 className="text-2xl font-bold text-white tracking-tight">QR Code Scanner</h2>
-            <p className="text-gray-400 text-sm">Upload a QR code image to check for phishing threats</p>
-          </div>
-        </div>
+    <div style={{ background: 'var(--bone)', minHeight: 'calc(100vh - 56px)' }}>
+      <div style={{ borderBottom: '1px solid var(--ink-08)', padding: '10px 24px', display: 'flex', justifyContent: 'space-between' }} className="t-mono">
+        <div style={{ fontSize: 10, letterSpacing: '0.15em', color: 'var(--ink-60)' }}>§CONSOLE / QR DECODER</div>
+        <div style={{ fontSize: 10, letterSpacing: '0.1em' }}><span className="blink" style={{ color: 'var(--signal)' }}>●</span> READY</div>
+      </div>
 
-        {/* Upload Section */}
-        {!result && (
-          <div className="mb-6">
+      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '40px 24px' }}>
+        {!result ? (
+          <div className="panel" style={{ padding: 40 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 24 }}>
+              <div>
+                <div className="t-eyebrow" style={{ marginBottom: 8 }}>§QR — INPUT</div>
+                <h2 className="h-display-2" style={{ fontSize: 28, margin: 0 }}>Upload a QR code image.</h2>
+              </div>
+              <div className="t-mono" style={{ fontSize: 11, color: 'var(--ink-60)' }}>JPG · PNG · WEBP · 10MB MAX</div>
+            </div>
+
             <div
-              className={`border-2 border-dashed rounded-lg p-12 text-center transition-all cursor-pointer ${
-                previewUrl 
-                  ? 'border-gray-700 bg-black/30' 
-                  : 'border-gray-800 hover:border-gray-700 bg-black/20'
-              }`}
-              onClick={() => fileInputRef.current?.click()}
-            >
-              {previewUrl ? (
-                <div className="space-y-4">
-                  <img
-                    src={previewUrl}
-                    alt="QR Code Preview"
-                    className="max-w-xs max-h-64 mx-auto rounded-lg border border-gray-800"
-                  />
-                  <p className="text-sm text-gray-400 font-mono">{selectedFile?.name}</p>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleReset();
-                    }}
-                    className="text-red-400 hover:text-red-300 text-sm flex items-center gap-2 mx-auto transition-colors"
-                  >
-                    <FaTimes /> Remove
+              onClick={() => inputRef.current?.click()}
+              onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
+              onDragLeave={() => setDrag(false)}
+              onDrop={(e) => { e.preventDefault(); setDrag(false); onSelect(e.dataTransfer.files?.[0]); }}
+              style={{
+                border: `2px dashed ${drag ? 'var(--ink)' : 'var(--ink-16)'}`,
+                padding: 60,
+                textAlign: 'center',
+                cursor: 'pointer',
+                background: drag ? 'var(--ink-04)' : 'transparent',
+                transition: 'all 120ms'
+              }}>
+              {preview ? (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+                  <img src={preview} alt="QR" style={{ maxWidth: 240, maxHeight: 240, border: '1px solid var(--ink)' }} />
+                  <div className="t-mono" style={{ fontSize: 11, color: 'var(--ink-60)' }}>{file?.name}</div>
+                  <button onClick={(e) => { e.stopPropagation(); reset(); }} className="t-mono" style={{ fontSize: 11, color: 'var(--signal)' }}>
+                    <FaTimes size={10} style={{ marginRight: 6 }} />REMOVE
                   </button>
                 </div>
               ) : (
-                <div className="space-y-4">
-                  <FaUpload className="text-5xl text-gray-600 mx-auto" />
-                  <div>
-                    <p className="text-lg font-medium text-white">
-                      Click to upload QR code image
-                    </p>
-                    <p className="text-sm text-gray-500 mt-2">
-                      Supports JPG, PNG, GIF (Max 10MB)
-                    </p>
-                  </div>
-                </div>
+                <>
+                  <FaUpload size={32} style={{ color: 'var(--ink-40)', marginBottom: 16 }} />
+                  <div className="h-display-2" style={{ fontSize: 18 }}>Drop QR image here or click to upload</div>
+                  <div className="t-mono" style={{ fontSize: 11, color: 'var(--ink-60)', marginTop: 8 }}>UPI · URL · vCard · WiFi</div>
+                </>
               )}
             </div>
+            <input ref={inputRef} type="file" accept="image/*" onChange={(e) => onSelect(e.target.files?.[0])} style={{ display: 'none' }} />
 
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleFileSelect}
-              className="hidden"
-            />
-
-            {/* Scan Button */}
-            {previewUrl && (
-              <button
-                onClick={handleScanQR}
-                disabled={scanning}
-                className={`w-full mt-4 py-3 px-6 rounded-lg font-semibold transition-all ${
-                  scanning
-                    ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
-                    : 'bg-white text-black hover:bg-gray-200 active:scale-[0.98]'
-                }`}
-              >
-                {scanning ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-500"></div>
-                    Scanning QR Code...
-                  </span>
-                ) : (
-                  <span className="flex items-center justify-center gap-2">
-                    <FaCamera /> Scan QR Code
-                  </span>
-                )}
+            {preview && (
+              <button onClick={onScan} disabled={scanning} className="btn-primary" style={{ width: '100%', marginTop: 24 }}>
+                {scanning ? 'DECODING...' : 'DECODE QR →'}
               </button>
             )}
+
+            {error && (
+              <div className="t-mono" style={{ marginTop: 16, fontSize: 12, color: 'var(--signal)' }}>! {error}</div>
+            )}
           </div>
+        ) : (
+          <QRResult result={result} onReset={reset} />
         )}
+      </div>
+    </div>
+  );
+};
 
-        {/* Error Message */}
-        {error && (
-          <div className="mb-6 p-4 bg-red-900/20 border border-red-800 rounded-lg flex items-start gap-3">
-            <FaTimesCircle className="text-red-400 mt-1" />
-            <div>
-              <p className="font-semibold text-red-400">Error</p>
-              <p className="text-red-300/80 text-sm">{error}</p>
-            </div>
+const QRResult = ({ result, onReset }) => {
+  const risk = result.overallRisk;
+  const tone = risk?.level === 'HIGH' ? 'signal' : risk?.level === 'MEDIUM' ? 'ink' : 'bone';
+
+  return (
+    <div>
+      <div className={`verdict verdict-${tone}`} style={{ flexDirection: 'row' }}>
+        <div style={{ flex: 1, padding: 32 }}>
+          <div className="t-eyebrow" style={{ color: tone === 'bone' ? 'var(--ink-60)' : 'var(--bone-60)' }}>§QR — VERDICT</div>
+          <h2 className="h-display" style={{ fontSize: 48, margin: '12px 0 0' }}>{risk?.level || 'UNKNOWN'}</h2>
+          <p style={{ marginTop: 12, fontSize: 16, opacity: 0.8 }}>{risk?.action}</p>
+        </div>
+        <div style={{ width: 1, background: tone === 'bone' ? 'var(--ink-08)' : 'var(--bone-08)' }} />
+        <div style={{ flex: 1, padding: 32, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <div className="t-eyebrow" style={{ color: tone === 'bone' ? 'var(--ink-60)' : 'var(--bone-60)' }}>RISK SCORE</div>
+          <div style={{ fontFamily: 'var(--type-display)', fontWeight: 700, fontSize: 72, lineHeight: 1, marginTop: 4, color: tone === 'signal' ? 'var(--bone)' : 'var(--ink)' }}>
+            {risk?.score || 0}<span style={{ fontSize: 18, opacity: 0.6, fontWeight: 500, marginLeft: 4 }}>/100</span>
           </div>
-        )}
-
-        {/* Results Section */}
-        {result && (
-          <div className="space-y-4">
-            {/* Overall Risk Assessment */}
-            <div className={`p-8 rounded-lg border ${getRiskBgColor(result.overallRisk?.level)}`}>
-              <div className="flex items-start gap-6">
-                <div className="text-4xl mt-1">{getRiskIcon(result.overallRisk?.level)}</div>
-                <div className="flex-1">
-                  <h3 className={`text-3xl font-bold tracking-tight ${getRiskColor(result.overallRisk?.level)}`}>
-                    {result.overallRisk?.level}
-                  </h3>
-                  <p className="text-lg text-white font-medium mt-2">{result.overallRisk?.action}</p>
-                  <p className="text-xs uppercase tracking-wider text-gray-500 mt-3">
-                    Risk Score: {result.overallRisk?.score}/100
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* QR Code Data */}
-            <div className="bg-black/30 p-6 rounded-lg border border-gray-800">
-              <h4 className="text-xs uppercase tracking-wider font-semibold text-gray-400 mb-4 flex items-center gap-2">
-                <FaQrcode /> QR Code Contents
-              </h4>
-              <div className="space-y-3">
-                <div>
-                  <span className="text-xs uppercase tracking-wider text-gray-500">Type</span>
-                  <span className="ml-3 text-sm font-mono text-white bg-black/50 px-3 py-1 rounded border border-gray-800">
-                    {result.qrCode?.type}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-xs uppercase tracking-wider text-gray-500 block mb-2">Data</span>
-                  <div className="p-3 bg-black/50 rounded border border-gray-800 text-sm font-mono text-white break-all">
-                    {result.qrCode?.data}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* UPI Payment Details */}
-            {result.upiPayment && (
-              <div className="bg-[#111111] p-6 rounded-lg border border-gray-800">
-                <h4 className="text-xs uppercase tracking-wider font-semibold text-gray-400 mb-4">UPI Payment Details</h4>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="text-xs uppercase tracking-wider text-gray-500 block mb-1">Payee</span>
-                    <p className="font-semibold text-white">{result.upiPayment.payee}</p>
-                  </div>
-                  <div>
-                    <span className="text-xs uppercase tracking-wider text-gray-500 block mb-1">Amount</span>
-                    <p className="font-semibold text-emerald-400">
-                      ₹{result.upiPayment.amount}
-                    </p>
-                  </div>
-                  {result.upiPayment.note && (
-                    <div className="col-span-2">
-                      <span className="text-xs uppercase tracking-wider text-gray-500 block mb-1">Note</span>
-                      <p className="font-medium text-white">{result.upiPayment.note}</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Risk Factors */}
-            {result.overallRisk?.factors?.length > 0 && (
-              <div className="bg-[#111111] p-6 rounded-lg border border-gray-800">
-                <h4 className="text-xs uppercase tracking-wider font-semibold text-gray-400 mb-4">Risk Factors Detected</h4>
-                <ul className="space-y-2">
-                  {result.overallRisk.factors.map((factor, index) => (
-                    <li key={index} className="flex items-start gap-3 text-sm text-gray-300">
-                      <span className="text-red-400 mt-1">•</span>
-                      <span>{factor}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* AI Analysis */}
-            {result.security?.aiAnalysis?.explanation && (
-              <div className="bg-[#111111] p-6 rounded-lg border border-gray-800">
-                <h4 className="text-xs uppercase tracking-wider font-semibold text-gray-400 mb-4">AI Analysis</h4>
-                <p className="text-sm text-gray-300 leading-relaxed">{result.security.aiAnalysis.explanation}</p>
-                {result.security.aiAnalysis.safetyTips?.length > 0 && (
-                  <div className="mt-4 pt-4 border-t border-gray-800">
-                    <p className="text-xs uppercase tracking-wider text-gray-500 mb-3">Safety Tips</p>
-                    <ul className="space-y-2">
-                      {result.security.aiAnalysis.safetyTips.map((tip, index) => (
-                        <li key={index} className="flex items-start gap-3 text-sm text-gray-400">
-                          <span className="text-white mt-1">•</span>
-                          <span>{tip}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Extracted URL */}
-            {result.extractedURL && (
-              <div className="bg-black/30 p-6 rounded-lg border border-gray-800">
-                <h4 className="text-xs uppercase tracking-wider font-semibold text-gray-400 mb-3">Extracted URL</h4>
-                <p className="text-sm font-mono text-white bg-black/50 p-3 rounded border border-gray-800 break-all">
-                  {result.extractedURL}
-                </p>
-              </div>
-            )}
-
-            {/* Action Buttons */}
-            <div className="flex gap-3 pt-2">
-              <button
-                onClick={handleReset}
-                className="flex-1 py-3 px-4 bg-white hover:bg-gray-200 text-black rounded-lg font-semibold transition-all active:scale-[0.98]"
-              >
-                Scan Another QR Code
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Info Box */}
-        <div className="mt-8 p-6 bg-black/30 border border-gray-800 rounded-lg">
-          <h4 className="text-xs uppercase tracking-wider font-semibold text-gray-400 mb-3">How it works</h4>
-          <ul className="text-sm text-gray-400 space-y-2">
-            <li className="flex items-start gap-3">
-              <span className="text-white mt-0.5">•</span>
-              <span>Upload a QR code image (from SMS, advertisement, payment request, etc.)</span>
-            </li>
-            <li className="flex items-start gap-3">
-              <span className="text-white mt-0.5">•</span>
-              <span>System decodes the QR code and extracts URLs or UPI payment details</span>
-            </li>
-            <li className="flex items-start gap-3">
-              <span className="text-white mt-0.5">•</span>
-              <span>Analyzes for phishing patterns using multiple detection layers</span>
-            </li>
-            <li className="flex items-start gap-3">
-              <span className="text-white mt-0.5">•</span>
-              <span>Provides AI-powered explanation and safety recommendations</span>
-            </li>
-            <li className="flex items-start gap-3">
-              <span className="text-white mt-0.5">•</span>
-              <span>Works with UPI payments, regular URLs, and shortened links</span>
-            </li>
-          </ul>
         </div>
       </div>
+
+      <div className="panel" style={{ padding: 24, marginTop: 24 }}>
+        <div className="t-eyebrow" style={{ marginBottom: 8 }}>§DECODED DATA — {result.qrCode?.type}</div>
+        <div className="t-mono" style={{ fontSize: 14, wordBreak: 'break-all', lineHeight: 1.4 }}>{result.qrCode?.data}</div>
+      </div>
+
+      {result.upiPayment && (
+        <div className="panel" style={{ padding: 24, marginTop: 24, background: 'var(--ink)', color: 'var(--bone)' }}>
+          <div className="t-eyebrow" style={{ marginBottom: 16, color: 'var(--bone-60)' }}>§UPI PAYMENT</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+            <div>
+              <div className="t-eyebrow" style={{ color: 'var(--bone-60)' }}>PAYEE</div>
+              <div className="t-mono" style={{ fontSize: 18, marginTop: 4 }}>{result.upiPayment.payee}</div>
+            </div>
+            <div>
+              <div className="t-eyebrow" style={{ color: 'var(--bone-60)' }}>AMOUNT</div>
+              <div className="t-mono" style={{ fontSize: 18, marginTop: 4, color: 'var(--signal)' }}>₹{result.upiPayment.amount}</div>
+            </div>
+            {result.upiPayment.note && (
+              <div style={{ gridColumn: '1 / -1' }}>
+                <div className="t-eyebrow" style={{ color: 'var(--bone-60)' }}>NOTE</div>
+                <div style={{ fontSize: 14, marginTop: 4 }}>{result.upiPayment.note}</div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {result.overallRisk?.factors?.length > 0 && (
+        <div className="panel" style={{ padding: 24, marginTop: 24 }}>
+          <div className="t-eyebrow" style={{ marginBottom: 16 }}>§INDICATORS — {result.overallRisk.factors.length}</div>
+          {result.overallRisk.factors.map((f, i) => (
+            <div key={i} className="t-mono" style={{ fontSize: 12, padding: '8px 0', borderTop: i === 0 ? 0 : '1px solid var(--ink-08)' }}>
+              <span style={{ color: 'var(--ink-40)', marginRight: 12 }}>{String(i + 1).padStart(2, '0')}</span>{f}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {result.security?.aiAnalysis?.explanation && (
+        <div className="panel" style={{ padding: 24, marginTop: 24, background: 'var(--ink)', color: 'var(--bone)' }}>
+          <div className="t-eyebrow" style={{ marginBottom: 12, color: 'var(--bone-60)' }}>§AI ANALYSIS</div>
+          <p style={{ fontSize: 14, lineHeight: 1.6 }}>{result.security.aiAnalysis.explanation}</p>
+        </div>
+      )}
+
+      <button onClick={onReset} className="btn-ghost" style={{ width: '100%', marginTop: 24 }}>
+        SCAN ANOTHER QR
+      </button>
     </div>
   );
 };

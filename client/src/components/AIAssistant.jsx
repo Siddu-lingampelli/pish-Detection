@@ -1,211 +1,113 @@
 import { useState, useRef, useEffect } from 'react';
-import { FiSend, FiX, FiMessageCircle } from 'react-icons/fi';
-import { BsRobot } from 'react-icons/bs';
+import { FiX, FiSend } from 'react-icons/fi';
 import { aiChat } from '../services/api';
 
 const AIAssistant = () => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([
-    {
-      role: 'assistant',
-      content: 'Hi! I\'m your security assistant. Ask me anything about phishing, scams, or online safety. For example:\n\n• "Is this email safe?"\n• "What are signs of phishing?"\n• "How to verify a website?"',
-      timestamp: new Date()
-    }
+    { role: 'assistant', content: 'Security operator online. Ask about phishing, scams, or any URL you want explained.' }
   ]);
   const [input, setInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const messagesEndRef = useRef(null);
-  const inputRef = useRef(null);
+  const [loading, setLoading] = useState(false);
+  const endRef = useRef(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  useEffect(() => {
-    if (isOpen && inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [isOpen]);
-
-  const handleSend = async () => {
-    if (!input.trim() || isLoading) return;
-
-    const userMessage = {
-      role: 'user',
-      content: input,
-      timestamp: new Date()
-    };
-
-    const currentInput = input;
+  const send = async () => {
+    if (!input.trim() || loading) return;
+    const text = input;
     setInput('');
-    setIsLoading(true);
+    setLoading(true);
 
     setMessages(prev => {
-      const updated = [...prev, userMessage];
+      const updated = [...prev, { role: 'user', content: text }];
       const history = updated.slice(-7, -1);
       (async () => {
         try {
-          const response = await aiChat(currentInput, history);
-          const assistantMessage = {
-            role: 'assistant',
-            content: response?.reply || 'Sorry, I could not generate a response.',
-            timestamp: new Date()
-          };
-          setMessages(curr => [...curr, assistantMessage]);
-        } catch (error) {
-          const errorMessage = {
-            role: 'assistant',
-            content: error.response?.data?.error || '⚠️ Sorry, I encountered an error. Please try again or check your connection.',
-            timestamp: new Date()
-          };
-          setMessages(curr => [...curr, errorMessage]);
-        } finally {
-          setIsLoading(false);
-        }
+          const r = await aiChat(text, history);
+          setMessages(curr => [...curr, { role: 'assistant', content: r?.reply || 'No response.' }]);
+        } catch (err) {
+          setMessages(curr => [...curr, { role: 'assistant', content: err.response?.data?.error || 'Connection error.' }]);
+        } finally { setLoading(false); }
       })();
       return updated;
     });
   };
 
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
-  };
-
-  const suggestedQuestions = [
-    "What are common phishing signs?",
-    "How to verify if a website is safe?",
-    "What should I do if I clicked a phishing link?",
-    "How to protect my passwords?"
-  ];
-
-  const handleSuggestion = (question) => {
-    setInput(question);
-    inputRef.current?.focus();
-  };
+  if (!open) return (
+    <button
+      onClick={() => setOpen(true)}
+      className="focus-ring"
+      style={{
+        position: 'fixed', bottom: 24, right: 24,
+        background: 'var(--ink)', color: 'var(--bone)',
+        border: '1px solid var(--ink)',
+        padding: '12px 16px',
+        fontFamily: 'var(--type-display)', fontWeight: 600, fontSize: 12,
+        letterSpacing: '0.1em', textTransform: 'uppercase',
+        zIndex: 100, display: 'flex', alignItems: 'center', gap: 8
+      }}
+    >
+      <span className="blink" style={{ color: 'var(--signal)' }}>●</span> ASK OPERATOR
+    </button>
+  );
 
   return (
-    <>
-      {/* Floating Button */}
-      {!isOpen && (
-        <button
-          onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 bg-white text-black p-4 rounded-full shadow-lg hover:scale-110 transition-transform duration-200 z-50 group"
-        >
-          <BsRobot className="w-6 h-6" />
-          <span className="absolute -top-2 -right-2 bg-emerald-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center animate-pulse">
-            AI
-          </span>
-        </button>
-      )}
-
-      {/* Chat Window */}
-      {isOpen && (
-        <div className="fixed bottom-6 right-6 w-96 h-[600px] bg-[#111111] border border-gray-800 rounded-lg shadow-2xl flex flex-col z-50">
-          {/* Header */}
-          <div className="bg-[#0a0a0a] border-b border-gray-800 p-4 rounded-t-lg flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <BsRobot className="w-8 h-8 text-white" />
-                <span className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></span>
-              </div>
-              <div>
-                <h3 className="text-white font-semibold">Security Assistant</h3>
-                <p className="text-xs text-gray-400">Powered by AI</p>
-              </div>
-            </div>
-            <button
-              onClick={() => setIsOpen(false)}
-              className="text-gray-400 hover:text-white transition-colors"
-            >
-              <FiX className="w-5 h-5" />
-            </button>
-          </div>
-
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-gray-800 scrollbar-track-transparent">
-            {messages.map((msg, idx) => (
-              <div
-                key={idx}
-                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                <div
-                  className={`max-w-[80%] p-3 rounded-lg ${
-                    msg.role === 'user'
-                      ? 'bg-white text-black'
-                      : 'bg-[#1a1a1a] text-gray-200 border border-gray-800'
-                  }`}
-                >
-                  <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
-                  <p className="text-xs mt-1 opacity-50">
-                    {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </p>
-                </div>
-              </div>
-            ))}
-
-            {isLoading && (
-              <div className="flex justify-start">
-                <div className="bg-[#1a1a1a] border border-gray-800 p-3 rounded-lg">
-                  <div className="flex gap-2">
-                    <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
-                    <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
-                    <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <div ref={messagesEndRef} />
-          </div>
-
-          {/* Suggested Questions */}
-          {messages.length <= 1 && (
-            <div className="px-4 pb-3 space-y-2">
-              <p className="text-xs text-gray-500 mb-2">Suggested questions:</p>
-              {suggestedQuestions.map((question, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => handleSuggestion(question)}
-                  className="w-full text-left text-xs text-gray-400 hover:text-white bg-[#1a1a1a] hover:bg-[#222222] border border-gray-800 p-2 rounded transition-colors"
-                >
-                  {question}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* Input */}
-          <div className="border-t border-gray-800 p-4">
-            <div className="flex gap-2">
-              <input
-                ref={inputRef}
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Ask about phishing, security..."
-                disabled={isLoading}
-                className="flex-1 bg-[#1a1a1a] border border-gray-800 rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-gray-700 disabled:opacity-50"
-              />
-              <button
-                onClick={handleSend}
-                disabled={!input.trim() || isLoading}
-                className="bg-white text-black p-2 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                <FiSend className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
+    <div style={{
+      position: 'fixed', bottom: 24, right: 24,
+      width: 400, height: 560,
+      background: 'var(--bone)', border: '1px solid var(--ink)',
+      display: 'flex', flexDirection: 'column',
+      zIndex: 100
+    }}>
+      <div style={{
+        padding: '12px 16px', borderBottom: '1px solid var(--ink)',
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center'
+      }}>
+        <div className="t-mono" style={{ fontSize: 10, letterSpacing: '0.15em' }}>
+          <span className="blink" style={{ color: 'var(--signal)' }}>●</span> OPERATOR ONLINE
         </div>
-      )}
-    </>
+        <button onClick={() => setOpen(false)} className="t-mono" style={{ fontSize: 11 }}><FiX /></button>
+      </div>
+
+      <div className="scroll-y" style={{ flex: 1, padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {messages.map((m, i) => (
+          <div key={i} style={{
+            alignSelf: m.role === 'user' ? 'flex-end' : 'flex-start',
+            maxWidth: '85%',
+            padding: '10px 14px',
+            background: m.role === 'user' ? 'var(--ink)' : 'transparent',
+            color: m.role === 'user' ? 'var(--bone)' : 'var(--ink)',
+            border: m.role === 'user' ? '1px solid var(--ink)' : '1px solid var(--ink-16)',
+            fontSize: 13, lineHeight: 1.5
+          }}>
+            {m.content}
+          </div>
+        ))}
+        {loading && (
+          <div style={{ alignSelf: 'flex-start', padding: '10px 14px', border: '1px solid var(--ink-16)' }}>
+            <span className="t-mono" style={{ fontSize: 11 }}><span className="blink">●</span> THINKING</span>
+          </div>
+        )}
+        <div ref={endRef} />
+      </div>
+
+      <div style={{ borderTop: '1px solid var(--ink)', padding: 12, display: 'flex', gap: 8 }}>
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && send()}
+          placeholder="Ask..."
+          className="field-sm"
+          disabled={loading}
+          style={{ fontFamily: 'var(--type-mono)', fontSize: 12 }}
+        />
+        <button onClick={send} disabled={loading || !input.trim()} className="btn-primary" style={{ padding: '0 16px' }}>
+          <FiSend size={12} />
+        </button>
+      </div>
+    </div>
   );
 };
 

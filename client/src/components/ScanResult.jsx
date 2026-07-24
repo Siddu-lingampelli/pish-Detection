@@ -1,219 +1,147 @@
 import React from 'react';
-import { FaCheckCircle, FaExclamationTriangle, FaTimesCircle, FaExternalLinkAlt } from 'react-icons/fa';
+import { FaExternalLinkAlt, FaCheckCircle, FaExclamationTriangle, FaTimesCircle } from 'react-icons/fa';
+import RiskGauge from './RiskGauge';
+
+const VerdictConfig = (result) => {
+  if (result === 'Phishing') return { tone: 'signal', tag: 'PHISHING', icon: FaTimesCircle, action: 'Do not visit. Treat as hostile.' };
+  if (result === 'Suspicious') return { tone: 'ink', tag: 'SUSPICIOUS', icon: FaExclamationTriangle, action: 'Verify before proceeding. Likely unsafe.' };
+  if (result === 'Legit') return { tone: 'bone', tag: 'CLEAR', icon: FaCheckCircle, action: 'No threats detected. Safe to proceed.' };
+  return { tone: 'bone', tag: 'UNKNOWN', icon: FaCheckCircle, action: 'Unable to classify.' };
+};
 
 const ScanResult = ({ result }) => {
   if (!result) return null;
 
-  const getResultConfig = () => {
-    switch (result.result) {
-      case 'Legit':
-        return {
-          bgColor: 'bg-emerald-900/20',
-          borderColor: 'border-emerald-600',
-          textColor: 'text-emerald-400',
-          icon: <FaCheckCircle className="text-4xl text-emerald-400" />,
-          title: 'Safe',
-          subtitle: 'This URL appears to be legitimate'
-        };
-      case 'Suspicious':
-        return {
-          bgColor: 'bg-yellow-900/20',
-          borderColor: 'border-yellow-600',
-          textColor: 'text-yellow-400',
-          icon: <FaExclamationTriangle className="text-4xl text-yellow-400" />,
-          title: 'Suspicious',
-          subtitle: 'Exercise caution with this URL'
-        };
-      case 'Phishing':
-        return {
-          bgColor: 'bg-red-900/20',
-          borderColor: 'border-red-600',
-          textColor: 'text-red-400',
-          icon: <FaTimesCircle className="text-4xl text-red-400" />,
-          title: 'Phishing detected',
-          subtitle: 'Do not visit this URL'
-        };
-      default:
-        return {
-          bgColor: 'bg-gray-900/20',
-          borderColor: 'border-gray-600',
-          textColor: 'text-gray-400',
-          icon: <FaCheckCircle className="text-4xl text-gray-400" />,
-          title: 'Analysis complete',
-          subtitle: 'Scan finished successfully'
-        };
-    }
-  };
-
-  const config = getResultConfig();
-  const confidenceScore = (result.confidence_score * 100).toFixed(0);
+  const cfg = VerdictConfig(result.result);
+  const Icon = cfg.icon;
+  const conf = (result.confidence_score * 100).toFixed(0);
 
   return (
-    <div className="space-y-4">
-      {/* Main Result Card */}
-      <div className={`${config.bgColor} border ${config.borderColor} rounded-lg p-8`}>
-        <div className="flex items-start gap-6">
-          <div className="flex-shrink-0">
-            {config.icon}
-          </div>
-          <div className="flex-1 min-w-0">
-            <h3 className={`text-3xl font-bold ${config.textColor} mb-1`}>
-              {config.title}
-            </h3>
-            <p className="text-gray-400 mb-6">{config.subtitle}</p>
-
-            {/* URL */}
-            <div className="mb-6">
-              <p className="text-xs uppercase tracking-wider text-gray-500 mb-2">Analyzed URL</p>
-              <p className="text-sm text-white font-mono bg-black/50 px-4 py-3 rounded border border-gray-800 break-all">
-                {result.url}
-              </p>
+    <div style={{ marginTop: 32 }}>
+      {/* VERDICT BAND */}
+      <div className={`verdict verdict-${cfg.tone}`} style={{ flexDirection: 'row', alignItems: 'stretch', padding: 0 }}>
+        <div style={{ flex: 1, padding: 32, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <div>
+            <div className="t-eyebrow" style={{ color: cfg.tone === 'bone' ? 'var(--ink-60)' : 'var(--bone-60)' }}>
+              §VERDICT — {new Date(result.created_at).toISOString().replace('T', ' ').slice(0, 19)} UTC
             </div>
-
-            {/* Confidence Score */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 12 }}>
+              <Icon size={28} />
+              <h2 className="h-display" style={{ fontSize: 48, margin: 0 }}>{cfg.tag}</h2>
+            </div>
+            <p style={{ marginTop: 12, fontSize: 16, opacity: 0.8, maxWidth: 480 }}>{cfg.action}</p>
+          </div>
+          <div style={{ display: 'flex', gap: 32, marginTop: 24, paddingTop: 16, borderTop: `1px solid ${cfg.tone === 'bone' ? 'var(--ink-08)' : 'var(--bone-08)'}` }}>
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs uppercase tracking-wider text-gray-500">Confidence</span>
-                <span className={`text-3xl font-bold tracking-tight ${config.textColor}`}>{confidenceScore}%</span>
-              </div>
-              <div className="w-full bg-gray-800/50 rounded-sm h-1.5 overflow-hidden">
-                <div
-                  className={`h-full transition-all duration-1000 ${
-                    result.result === 'Legit'
-                      ? 'bg-emerald-500'
-                      : result.result === 'Suspicious'
-                      ? 'bg-yellow-500'
-                      : 'bg-red-500'
-                  }`}
-                  style={{ width: `${confidenceScore}%` }}
-                />
-              </div>
+              <div className="t-eyebrow" style={{ color: cfg.tone === 'bone' ? 'var(--ink-60)' : 'var(--bone-60)' }}>CONFIDENCE</div>
+              <div className="t-mono" style={{ fontSize: 22, marginTop: 4, fontWeight: 600 }}>{conf}%</div>
+            </div>
+            <div>
+              <div className="t-eyebrow" style={{ color: cfg.tone === 'bone' ? 'var(--ink-60)' : 'var(--bone-60)' }}>DURATION</div>
+              <div className="t-mono" style={{ fontSize: 22, marginTop: 4, fontWeight: 600 }}>{result.scan_duration}ms</div>
+            </div>
+            <div>
+              <div className="t-eyebrow" style={{ color: cfg.tone === 'bone' ? 'var(--ink-60)' : 'var(--bone-60)' }}>SSL</div>
+              <div className="t-mono" style={{ fontSize: 22, marginTop: 4, fontWeight: 600 }}>{result.meta_data?.has_ssl ? 'YES' : 'NO'}</div>
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Technical Details */}
-      <div className="grid md:grid-cols-2 gap-4">
-        {/* SSL Status */}
-        <div className="bg-[#111111] border border-gray-800 rounded-lg p-6">
-          <p className="text-xs uppercase tracking-wider text-gray-500 mb-2">SSL Certificate</p>
-          <p className="text-lg font-semibold text-white">
-            {result.meta_data?.has_ssl ? 'Secured' : 'Not secured'}
-          </p>
-        </div>
-
-        {/* Scan Duration */}
-        <div className="bg-[#111111] border border-gray-800 rounded-lg p-6">
-          <p className="text-xs uppercase tracking-wider text-gray-500 mb-2">Scan duration</p>
-          <p className="text-lg font-semibold text-white">{result.scan_duration}ms</p>
+        <div style={{ width: 1, background: cfg.tone === 'bone' ? 'var(--ink-08)' : 'var(--bone-08)' }} />
+        <div style={{ flex: 1, padding: 32, display: 'flex', alignItems: 'center' }}>
+          <RiskGauge score={Math.round(result.confidence_score * 100)} />
         </div>
       </div>
 
-      {/* Risk Factors */}
-      {result.meta_data?.risk_factors && result.meta_data.risk_factors.length > 0 && (
-        <div className="bg-[#111111] border border-gray-800 rounded-lg p-6">
-          <h4 className="text-sm font-semibold text-white mb-4">Risk factors</h4>
-          <ul className="space-y-2">
-            {result.meta_data.risk_factors.map((factor, index) => (
-              <li key={index} className="flex items-start gap-3 text-sm text-gray-400">
-                <span className="text-red-500 mt-1">•</span>
-                <span>{factor}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      {/* TARGET URL */}
+      <div className="panel" style={{ marginTop: 24, padding: 24 }}>
+        <div className="t-eyebrow" style={{ marginBottom: 8 }}>§TARGET</div>
+        <div className="t-mono" style={{ fontSize: 14, wordBreak: 'break-all', lineHeight: 1.4 }}>{result.url}</div>
+      </div>
 
-      {/* Keywords */}
-      {result.meta_data?.keywords && result.meta_data.keywords.length > 0 && (
-        <div className="bg-[#111111] border border-gray-800 rounded-lg p-6">
-          <h4 className="text-sm font-semibold text-white mb-4">Suspicious keywords</h4>
-          <div className="flex flex-wrap gap-2">
-            {result.meta_data.keywords.map((keyword, index) => (
-              <span
-                key={index}
-                className="px-3 py-1 bg-orange-900/30 border border-orange-800 text-orange-400 text-xs rounded-md"
-              >
-                {keyword}
-              </span>
+      {/* RISK FACTORS */}
+      {result.meta_data?.risk_factors?.length > 0 && (
+        <div className="panel" style={{ marginTop: 24, padding: 24 }}>
+          <div className="t-eyebrow" style={{ marginBottom: 16 }}>
+            §INDICATORS — {result.meta_data.risk_factors.length} DETECTED
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+            {result.meta_data.risk_factors.map((f, i) => (
+              <div key={i} style={{
+                display: 'flex', alignItems: 'center', gap: 16,
+                padding: '12px 0',
+                borderTop: i === 0 ? 0 : '1px solid var(--ink-08)',
+                fontSize: 14
+              }}>
+                <span className="t-mono" style={{ color: 'var(--ink-40)', fontSize: 11, minWidth: 32 }}>
+                  {String(i + 1).padStart(2, '0')}
+                </span>
+                <span style={{ flex: 1 }}>{f}</span>
+                <span className="t-mono" style={{ fontSize: 10, color: 'var(--signal)', letterSpacing: '0.1em' }}>FLAGGED</span>
+              </div>
             ))}
           </div>
         </div>
       )}
 
-      {/* Threat Types */}
-      {result.meta_data?.threat_types && result.meta_data.threat_types.length > 0 && (
-        <div className="bg-red-900/20 border border-red-800 rounded-lg p-6">
-          <h4 className="text-sm font-semibold text-red-400 mb-4">Identified threats</h4>
-          <div className="flex flex-wrap gap-2">
-            {result.meta_data.threat_types.map((threat, index) => (
-              <span
-                key={index}
-                className="px-3 py-1 bg-red-900/40 border border-red-700 text-red-300 text-xs font-medium rounded-md uppercase tracking-wider"
-              >
-                {threat}
-              </span>
-            ))}
+      {/* KEYWORDS + THREATS */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginTop: 24 }}>
+        {result.meta_data?.keywords?.length > 0 && (
+          <div className="panel" style={{ padding: 24 }}>
+            <div className="t-eyebrow" style={{ marginBottom: 16 }}>§KEYWORDS</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {result.meta_data.keywords.map((k, i) => (
+                <span key={i} className="chip chip-mute">{k}</span>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+        {result.meta_data?.threat_types?.length > 0 && (
+          <div className="panel" style={{ padding: 24, background: 'var(--ink)', color: 'var(--bone)' }}>
+            <div className="t-eyebrow" style={{ marginBottom: 16, color: 'var(--bone-60)' }}>§THREAT TYPES</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {result.meta_data.threat_types.map((t, i) => (
+                <div key={i} className="t-mono" style={{ fontSize: 13 }}>
+                  <span style={{ color: 'var(--signal)' }}>●</span> {t.toUpperCase()}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
 
-      {/* URLScan.io */}
+      {/* URLSCAN */}
       {result.meta_data?.urlscan && (
-        <div className="bg-[#111111] border border-gray-800 rounded-lg p-6">
-          <h4 className="text-sm font-semibold text-white mb-3">URLScan.io analysis</h4>
-          <p className="text-sm text-gray-400 mb-4">{result.meta_data.urlscan.message}</p>
+        <div className="panel" style={{ marginTop: 24, padding: 24 }}>
+          <div className="t-eyebrow" style={{ marginBottom: 12 }}>§URLSCAN.IO</div>
+          <p style={{ fontSize: 14, color: 'var(--ink-60)', marginBottom: 12 }}>{result.meta_data.urlscan.message}</p>
           {result.meta_data.urlscan.resultUrl && (
-            <a
-              href={result.meta_data.urlscan.resultUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-sm text-white hover:text-gray-300 transition-colors"
-            >
-              View detailed report
-              <FaExternalLinkAlt className="text-xs" />
+            <a href={result.meta_data.urlscan.resultUrl} target="_blank" rel="noopener noreferrer"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 13, borderBottom: '1px solid var(--ink)' }}>
+              Open full report <FaExternalLinkAlt size={10} />
             </a>
           )}
         </div>
       )}
 
-      {/* AI Explanation */}
-      {result.ai_explanation && (
-        <div className="bg-[#111111] border border-gray-800 rounded-lg p-6">
-          <h4 className="text-sm font-semibold text-white mb-4">AI analysis</h4>
-          <p className="text-sm text-gray-300 leading-relaxed mb-4">
-            {result.ai_explanation.text}
-          </p>
-
-          {result.ai_explanation.safety_tips && result.ai_explanation.safety_tips.length > 0 && (
-            <div className="border-t border-gray-800 pt-4 mt-4">
-              <h5 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
-                Safety recommendations
-              </h5>
-              <ul className="space-y-2">
-                {result.ai_explanation.safety_tips.map((tip, index) => (
-                  <li key={index} className="flex items-start gap-3 text-sm text-gray-400">
-                    <span className="text-white mt-1">•</span>
-                    <span>{tip}</span>
+      {/* AI EXPLANATION */}
+      {result.ai_explanation?.text && (
+        <div className="panel" style={{ marginTop: 24, padding: 24, background: 'var(--ink)', color: 'var(--bone)' }}>
+          <div className="t-eyebrow" style={{ marginBottom: 12, color: 'var(--bone-60)' }}>§AI ANALYSIS — {result.ai_explanation.generated_by}</div>
+          <p style={{ fontSize: 15, lineHeight: 1.6 }}>{result.ai_explanation.text}</p>
+          {result.ai_explanation.safety_tips?.length > 0 && (
+            <div style={{ marginTop: 20, paddingTop: 20, borderTop: '1px solid var(--bone-08)' }}>
+              <div className="t-eyebrow" style={{ marginBottom: 12, color: 'var(--bone-60)' }}>ACTIONS</div>
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                {result.ai_explanation.safety_tips.map((t, i) => (
+                  <li key={i} style={{ padding: '6px 0', fontSize: 13, color: 'var(--bone-60)' }}>
+                    <span style={{ color: 'var(--signal)', marginRight: 12 }}>→</span>{t}
                   </li>
                 ))}
               </ul>
             </div>
           )}
-
-          <div className="mt-4 pt-4 border-t border-gray-800">
-            <p className="text-xs text-gray-500">{result.ai_explanation.generated_by}</p>
-          </div>
         </div>
       )}
-
-      {/* Timestamp */}
-      <div className="text-center">
-        <p className="text-xs text-gray-500">
-          Analyzed on {new Date(result.created_at).toLocaleString()}
-        </p>
-      </div>
     </div>
   );
 };

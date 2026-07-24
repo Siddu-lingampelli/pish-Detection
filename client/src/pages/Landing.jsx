@@ -1,269 +1,227 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FaShieldAlt, FaLink, FaQrcode, FaChartLine } from 'react-icons/fa';
+
+const LiveClock = () => {
+  const [t, setT] = useState(() => new Date());
+  useEffect(() => {
+    const id = setInterval(() => setT(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  return (
+    <span className="t-mono">
+      {t.toISOString().replace('T', ' ').slice(0, 19)}<span className="blink">_</span> UTC
+    </span>
+  );
+};
+
+const LiveVerdict = () => {
+  const samples = [
+    { url: 'login.paypa1.com/verify', risk: 92, tag: 'PHISH' },
+    { url: 'drive.google.com/file/d/1xK', risk: 4, tag: 'CLEAR' },
+    { url: 'support-appleid.com', risk: 88, tag: 'PHISH' },
+    { url: 'github.com/anomalyco/opencode', risk: 2, tag: 'CLEAR' },
+    { url: 'free-crypto-airdrop.tk', risk: 96, tag: 'PHISH' },
+    { url: 'wikipedia.org/wiki/Phishing', risk: 0, tag: 'CLEAR' }
+  ];
+  const [i, setI] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setI((i + 1) % samples.length), 2200);
+    return () => clearInterval(id);
+  }, [i, samples.length]);
+  const s = samples[i];
+  return (
+    <div className="t-mono" style={{ fontSize: 12, lineHeight: 1.7 }}>
+      <div style={{ color: 'var(--ink-60)' }}>→ SCAN {s.url}</div>
+      <div style={{ display: 'flex', gap: 16, marginTop: 2 }}>
+        <span>RISK {String(s.risk).padStart(3, '0')}/100</span>
+        <span style={{ color: s.risk >= 70 ? 'var(--signal)' : 'var(--ink-60)' }}>VERDICT {s.tag}</span>
+      </div>
+    </div>
+  );
+};
 
 const Landing = () => {
   return (
-    <div className="min-h-screen bg-[#0a0a0a] relative overflow-hidden">
-      {/* Subtle grid background */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#1a1a1a_1px,transparent_1px),linear-gradient(to_bottom,#1a1a1a_1px,transparent_1px)] bg-[size:4rem_4rem]"></div>
-      
-      {/* Hero Section */}
-      <div className="relative z-10 container mx-auto px-6 py-24">
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          className="max-w-6xl mx-auto"
-        >
-          {/* Logo */}
-          <div className="flex items-center gap-4 mb-12">
-            <div className="w-12 h-12 bg-white rounded-lg flex items-center justify-center">
-              <FaShieldAlt className="text-2xl text-black" />
-            </div>
+    <div style={{ background: 'var(--bone)', minHeight: '100vh', color: 'var(--ink)' }}>
+      {/* TOP STATUS BAR */}
+      <header style={{
+        borderBottom: '1px solid var(--ink)',
+        padding: '10px 32px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        fontSize: 11
+      }}>
+        <div className="t-mono" style={{ display: 'flex', gap: 24, letterSpacing: '0.1em' }}>
+          <span>PG//02</span>
+          <span style={{ color: 'var(--ink-60)' }}>PHISHGUARD CONSOLE</span>
+        </div>
+        <div className="t-mono" style={{ display: 'flex', gap: 24, letterSpacing: '0.05em' }}>
+          <span style={{ color: 'var(--ink-60)' }}>v2.4.0</span>
+          <span><span className="blink" style={{ color: 'var(--signal)' }}>●</span> ALL SYSTEMS NOMINAL</span>
+          <LiveClock />
+        </div>
+      </header>
+
+      {/* HERO */}
+      <section style={{ padding: '80px 32px 64px', borderBottom: '1px solid var(--ink)', position: 'relative' }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 64, alignItems: 'start' }}>
             <div>
-              <h1 className="text-2xl font-semibold text-white tracking-tight">PhishGuard</h1>
-              <p className="text-sm text-gray-500">Security Intelligence Platform</p>
-            </div>
-          </div>
-
-          {/* Main heading */}
-          <h2 className="text-6xl md:text-7xl font-bold text-white mb-6 tracking-tight leading-[1.1]">
-            Enterprise-grade<br />threat detection
-          </h2>
-          
-          <p className="text-xl text-gray-400 mb-12 max-w-2xl leading-relaxed">
-            Seven-layer security architecture powered by advanced threat intelligence. 
-            Real-time analysis of URLs and QR codes with institutional-grade accuracy.
-          </p>
-
-          {/* CTA Buttons */}
-          <div className="flex flex-wrap gap-4 mb-20">
-            <Link to="/scanner">
-              <motion.button
-                whileHover={{ backgroundColor: '#ffffff' }}
-                whileTap={{ scale: 0.98 }}
-                className="px-8 py-4 bg-white text-black text-base font-medium rounded-lg transition-colors"
-              >
-                Start analysis
-              </motion.button>
-            </Link>
-            
-            <Link to="/qr-scanner">
-              <motion.button
-                whileHover={{ borderColor: '#ffffff' }}
-                whileTap={{ scale: 0.98 }}
-                className="px-8 py-4 bg-transparent border-2 border-gray-700 text-white text-base font-medium rounded-lg transition-colors"
-              >
-                Scan QR code
-              </motion.button>
-            </Link>
-
-            <Link to="/login">
-              <motion.button
-                whileHover={{ borderColor: '#ffffff' }}
-                whileTap={{ scale: 0.98 }}
-                className="px-8 py-4 bg-transparent border-2 border-gray-700 text-white text-base font-medium rounded-lg transition-colors"
-              >
-                Login
-              </motion.button>
-            </Link>
-
-            <Link to="/register">
-              <motion.button
-                whileHover={{ borderColor: '#ffffff', backgroundColor: 'rgba(255,255,255,0.05)' }}
-                whileTap={{ scale: 0.98 }}
-                className="px-8 py-4 bg-transparent border-2 border-gray-700 text-white text-base font-medium rounded-lg transition-colors"
-              >
-                Sign Up
-              </motion.button>
-            </Link>
-          </div>
-
-          {/* Stats */}
-          <div className="grid grid-cols-3 gap-8 max-w-2xl border-t border-gray-800 pt-8">
-            <div>
-              <div className="text-4xl font-bold text-white mb-1">7</div>
-              <div className="text-sm text-gray-500 uppercase tracking-wider">Security layers</div>
-            </div>
-            <div>
-              <div className="text-4xl font-bold text-white mb-1">42</div>
-              <div className="text-sm text-gray-500 uppercase tracking-wider">Threat indicators</div>
-            </div>
-            <div>
-              <div className="text-4xl font-bold text-white mb-1">4</div>
-              <div className="text-sm text-gray-500 uppercase tracking-wider">API integrations</div>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Features Section */}
-        <motion.div 
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          transition={{ duration: 0.6 }}
-          viewport={{ once: true }}
-          className="relative z-10 container mx-auto px-6 py-32"
-        >
-          <div className="max-w-6xl mx-auto">
-            <h3 className="text-sm uppercase tracking-wider text-gray-500 mb-4">Capabilities</h3>
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-20 tracking-tight">
-              Advanced security architecture
-            </h2>
-
-            <div className="grid md:grid-cols-3 gap-8">
-              {[
-                {
-                  title: "Real-time analysis",
-                  desc: "Sub-second threat detection with comprehensive security scoring and instant verdict delivery."
-                },
-                {
-                  title: "Neural intelligence",
-                  desc: "Advanced AI providing natural language threat explanations and actionable security insights."
-                },
-                {
-                  title: "AI Screenshot analysis",
-                  desc: "Computer vision powered fake login page detection with OCR text extraction and visual pattern recognition."
-                },
-                {
-                  title: "QR code intelligence",
-                  desc: "Deep analysis of embedded QR codes from payment requests and digital advertisements."
-                },
-                {
-                  title: "Regional protection",
-                  desc: "Specialized algorithms targeting region-specific phishing campaigns and attack vectors."
-                },
-                {
-                  title: "Multi-engine scanning",
-                  desc: "Integrated threat intelligence from Google Safe Browsing, VirusTotal, and URLScan.io."
-                },
-                {
-                  title: "Intelligence dashboard",
-                  desc: "Advanced analytics with threat pattern visualization and historical trend analysis."
-                }
-              ].map((feature, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1, duration: 0.5 }}
-                  viewport={{ once: true }}
-                  className="border-t border-gray-800 pt-6"
-                >
-                  <h4 className="text-xl font-semibold text-white mb-3">{feature.title}</h4>
-                  <p className="text-gray-400 leading-relaxed">{feature.desc}</p>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Security Layers */}
-        <motion.div 
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          transition={{ duration: 0.6 }}
-          viewport={{ once: true }}
-          className="relative z-10 container mx-auto px-6 py-32 border-t border-gray-800"
-        >
-          <div className="max-w-4xl mx-auto">
-            <h3 className="text-sm uppercase tracking-wider text-gray-500 mb-4">Security protocol</h3>
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-16 tracking-tight">
-              Seven-layer detection system
-            </h2>
-
-            <div className="space-y-12">
-              {[
-                { num: "01", title: "URL pattern analysis", desc: "Heuristic analysis of URL structure, suspicious TLDs, and IP-based addresses" },
-                { num: "02", title: "Keyword intelligence", desc: "Deep scan for phishing indicators including regional payment systems" },
-                { num: "03", title: "SSL validation", desc: "Cryptographic certificate verification and secure connection analysis" },
-                { num: "04", title: "Google Safe Browsing", desc: "Real-time lookup against Google's global threat intelligence database" },
-                { num: "05", title: "VirusTotal scanning", desc: "Aggregate scanning across 90+ antivirus engines" },
-                { num: "06", title: "URLScan.io analysis", desc: "Visual rendering, network traffic inspection, and SSL validation" },
-                { num: "07", title: "AI assessment", desc: "Natural language processing for threat explanation and recommendations" }
-              ].map((item, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, x: -20 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.05, duration: 0.5 }}
-                  viewport={{ once: true }}
-                  className="grid md:grid-cols-12 gap-6 items-start"
-                >
-                  <div className="md:col-span-2">
-                    <span className="text-4xl font-bold text-gray-800">{item.num}</span>
-                  </div>
-                  <div className="md:col-span-10 border-t border-gray-800 pt-4">
-                    <h4 className="text-xl font-semibold text-white mb-2">{item.title}</h4>
-                    <p className="text-gray-400">{item.desc}</p>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </motion.div>
-
-        {/* CTA Section */}
-        <motion.div 
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          transition={{ duration: 0.6 }}
-          viewport={{ once: true }}
-          className="relative z-10 container mx-auto px-6 py-32 border-t border-gray-800"
-        >
-          <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 tracking-tight">
-              Deploy enterprise security
-            </h2>
-            <p className="text-xl text-gray-400 mb-12">
-              Start protecting your organization with advanced threat intelligence
-            </p>
-            <div className="flex flex-wrap gap-4 justify-center">
-              <Link to="/scanner">
-                <motion.button
-                  whileHover={{ backgroundColor: '#ffffff' }}
-                  whileTap={{ scale: 0.98 }}
-                  className="px-8 py-4 bg-white text-black text-base font-medium rounded-lg transition-colors"
-                >
-                  Start analysis
-                </motion.button>
-              </Link>
-              <Link to="/analytics">
-                <motion.button
-                  whileHover={{ borderColor: '#ffffff' }}
-                  whileTap={{ scale: 0.98 }}
-                  className="px-8 py-4 bg-transparent border-2 border-gray-700 text-white text-base font-medium rounded-lg transition-colors"
-                >
-                  View dashboard
-                </motion.button>
-              </Link>
-            </div>
-          </div>
-        </motion.div>
-      </div>
-
-      {/* Footer */}
-      <div className="relative z-10 border-t border-gray-800 py-12">
-        <div className="container mx-auto px-6">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-white rounded-md flex items-center justify-center">
-                <FaShieldAlt className="text-lg text-black" />
+              <div className="t-eyebrow" style={{ marginBottom: 24, display: 'flex', alignItems: 'center', gap: 12 }}>
+                <span style={{ width: 24, height: 1, background: 'var(--ink)' }} />
+                CYBER THREAT INTELLIGENCE / EST. 2024
               </div>
-              <div>
-                <div className="text-base font-semibold text-white">PhishGuard</div>
-                <div className="text-xs text-gray-500">© 2025 All rights reserved</div>
+              <h1 className="h-display" style={{ fontSize: 'clamp(56px, 8vw, 112px)', margin: 0 }}>
+                Stop phishing<br />
+                <span style={{ color: 'var(--signal)' }}>before</span> it starts.
+              </h1>
+              <p style={{ fontSize: 18, lineHeight: 1.5, color: 'var(--ink-60)', maxWidth: 540, marginTop: 28 }}>
+                Seven-layer threat analysis on every URL, QR code, screenshot, and email that lands in your team's queue. Verdicts in under 800ms. Explainable AI. Zero data retention.
+              </p>
+              <div style={{ display: 'flex', gap: 12, marginTop: 36, flexWrap: 'wrap' }}>
+                <Link to="/scanner"><button className="btn-primary">Open console →</button></Link>
+                <Link to="/register"><button className="btn-ghost">Request access</button></Link>
+              </div>
+              <div style={{ display: 'flex', gap: 32, marginTop: 48, paddingTop: 24, borderTop: '1px solid var(--ink-08)' }}>
+                <div className="stat">
+                  <div className="stat-num">0.8<span style={{ fontSize: 16, color: 'var(--ink-60)', fontWeight: 500 }}>s</span></div>
+                  <div className="stat-label">Median verdict</div>
+                </div>
+                <div className="stat">
+                  <div className="stat-num">94<span style={{ fontSize: 16, color: 'var(--ink-60)', fontWeight: 500 }}>%</span></div>
+                  <div className="stat-label">Detection rate</div>
+                </div>
+                <div className="stat">
+                  <div className="stat-num">7</div>
+                  <div className="stat-label">Detection layers</div>
+                </div>
+                <div className="stat">
+                  <div className="stat-num">0</div>
+                  <div className="stat-label">Data retained</div>
+                </div>
               </div>
             </div>
-            <div className="flex items-center gap-8 text-sm text-gray-500">
-              <span>7-layer protection</span>
-              <span>Real-time intelligence</span>
-              <span>AI-powered</span>
+
+            {/* LIVE CONSOLE PANEL */}
+            <div className="panel" style={{ padding: 0, background: 'var(--ink)', color: 'var(--bone)', overflow: 'hidden' }}>
+              <div style={{
+                padding: '12px 20px',
+                borderBottom: '1px solid var(--bone-08)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                fontSize: 10,
+                letterSpacing: '0.15em'
+              }} className="t-mono">
+                <span style={{ color: 'var(--bone-60)' }}>STREAM://live.scans</span>
+                <span><span className="blink" style={{ color: 'var(--signal)' }}>●</span> REC</span>
+              </div>
+              <div style={{ padding: 24, minHeight: 220 }}>
+                <LiveVerdict />
+              </div>
+              <div style={{
+                padding: '16px 20px',
+                borderTop: '1px solid var(--bone-08)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                fontSize: 11
+              }} className="t-mono">
+                <span style={{ color: 'var(--bone-60)' }}>Last 6 verdicts</span>
+                <span>↑ live</span>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      </section>
+
+      {/* CAPABILITIES */}
+      <section style={{ padding: '96px 32px', borderBottom: '1px solid var(--ink)' }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 64 }}>
+            <div>
+              <div className="t-eyebrow" style={{ marginBottom: 16 }}>§01 — CAPABILITIES</div>
+              <h2 className="h-display-2" style={{ fontSize: 'clamp(32px, 4vw, 56px)', margin: 0 }}>
+                Four surfaces.<br />One verdict engine.
+              </h2>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0, border: '1px solid var(--ink)' }}>
+              {[
+                { code: '01', title: 'URL scanner', body: 'Heuristics, keyword intel, SSL validation, Google Safe Browsing, VirusTotal, URLScan.io, and AI reasoning on every submit.' },
+                { code: '02', title: 'QR decoder', body: 'Detects UPI scams, payment fraud, and embedded phishing URLs in image-based lures common in India and SEA.' },
+                { code: '03', title: 'Screenshot analysis', body: 'OCR plus vision models extract text, brand cues, and login-form signals from pasted screenshots.' },
+                { code: '04', title: 'Email triage', body: 'Paste a suspicious email. Get a risk score, indicator list, and AI-generated explainer in seconds.' }
+              ].map((c, i) => (
+                <div key={i} style={{
+                  padding: 32,
+                  borderRight: i % 2 === 0 ? '1px solid var(--ink)' : 0,
+                  borderBottom: i < 2 ? '1px solid var(--ink)' : 0
+                }}>
+                  <div className="t-mono" style={{ fontSize: 11, color: 'var(--ink-60)', marginBottom: 12 }}>§{c.code}</div>
+                  <h3 className="h-display-2" style={{ fontSize: 24, margin: 0 }}>{c.title}</h3>
+                  <p style={{ fontSize: 14, color: 'var(--ink-60)', lineHeight: 1.5, marginTop: 12 }}>{c.body}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* HOW IT WORKS — REAL PROCESS, NOT NUMBERED FOR SHOW */}
+      <section style={{ padding: '96px 32px', borderBottom: '1px solid var(--ink)', background: 'var(--ink)', color: 'var(--bone)' }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto' }}>
+          <div className="t-eyebrow" style={{ marginBottom: 16, color: 'var(--bone-60)' }}>§02 — DETECTION PIPELINE</div>
+          <h2 className="h-display-2" style={{ fontSize: 'clamp(32px, 4vw, 56px)', margin: 0, maxWidth: 800 }}>
+            Every submit runs through seven independent layers. The verdict is whichever layer fires first.
+          </h2>
+
+          <div style={{ marginTop: 64, display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 0, border: '1px solid var(--bone-08)' }}>
+            {[
+              { n: '01', t: 'URL parse', s: '0.2ms' },
+              { n: '02', t: 'Heuristics', s: '0.4ms' },
+              { n: '03', t: 'Keyword intel', s: '0.6ms' },
+              { n: '04', t: 'SSL check', s: '12ms' },
+              { n: '05', t: 'GSB lookup', s: '180ms' },
+              { n: '06', t: 'VT / URLScan', s: '420ms' },
+              { n: '07', t: 'AI reasoning', s: '780ms' }
+            ].map((l, i) => (
+              <div key={i} style={{
+                padding: 24,
+                borderRight: i < 6 ? '1px solid var(--bone-08)' : 0
+              }}>
+                <div className="t-mono" style={{ fontSize: 10, color: 'var(--bone-60)', letterSpacing: '0.15em' }}>{l.n}</div>
+                <div style={{ fontFamily: 'var(--type-display)', fontWeight: 600, fontSize: 16, marginTop: 8 }}>{l.t}</div>
+                <div className="t-mono" style={{ fontSize: 11, color: 'var(--bone-60)', marginTop: 8 }}>{l.s}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section style={{ padding: '120px 32px' }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto', textAlign: 'center' }}>
+          <div className="t-eyebrow" style={{ marginBottom: 24 }}>§03 — DEPLOY</div>
+          <h2 className="h-display" style={{ fontSize: 'clamp(48px, 6vw, 88px)', margin: 0, maxWidth: 900, marginLeft: 'auto', marginRight: 'auto' }}>
+            <span style={{ color: 'var(--signal)' }}>Ship a phishing link</span> to your team right now.
+          </h2>
+          <p style={{ fontSize: 18, color: 'var(--ink-60)', maxWidth: 600, margin: '24px auto 0' }}>
+            No credit card. No email gate. Open the console and submit a URL.
+          </p>
+          <div style={{ display: 'flex', gap: 12, marginTop: 40, justifyContent: 'center' }}>
+            <Link to="/scanner"><button className="btn-signal">Open console →</button></Link>
+            <Link to="/register"><button className="btn-ghost">Create account</button></Link>
+          </div>
+        </div>
+      </section>
+
+      {/* FOOTER */}
+      <footer style={{ borderTop: '1px solid var(--ink)', padding: '32px' }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 11 }} className="t-mono">
+          <span>PHISHGUARD © 2024 — DEFEND AT THE EDGE</span>
+          <span style={{ color: 'var(--ink-60)' }}>PG//02 — CONSOLE BUILD</span>
+        </div>
+      </footer>
     </div>
   );
 };

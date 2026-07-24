@@ -1,284 +1,136 @@
 import { useState } from 'react';
-import { FiMail, FiAlertTriangle, FiCheckCircle, FiXCircle } from 'react-icons/fi';
-import { BsShieldCheck } from 'react-icons/bs';
 import { analyzeEmail } from '../services/api';
 
 const EmailScanner = () => {
-  const [emailContent, setEmailContent] = useState('');
-  const [senderEmail, setSenderEmail] = useState('');
-  const [subject, setSubject] = useState('');
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [results, setResults] = useState(null);
+  const [email, setEmail] = useState({ content: '', sender: '', subject: '' });
+  const [analyzing, setAnalyzing] = useState(false);
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState(null);
 
-  const handleAnalyze = async () => {
-    if (!emailContent.trim()) {
-      alert('Please paste the email content');
-      return;
-    }
-
-    setIsAnalyzing(true);
-    setResults(null);
-
+  const analyze = async () => {
+    if (!email.content.trim()) { setError('Paste email content'); return; }
+    setError(null);
+    setAnalyzing(true);
+    setResult(null);
     try {
-      const response = await analyzeEmail({
-        emailContent,
-        senderEmail,
-        subject
+      const data = await analyzeEmail({
+        emailContent: email.content,
+        senderEmail: email.sender,
+        subject: email.subject
       });
-      setResults(response);
-    } catch (error) {
-      alert(error.response?.data?.error || 'Failed to analyze email. Please try again.');
+      setResult(data);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Analysis failed');
     } finally {
-      setIsAnalyzing(false);
+      setAnalyzing(false);
     }
   };
 
-  const handleClear = () => {
-    setEmailContent('');
-    setSenderEmail('');
-    setSubject('');
-    setResults(null);
-  };
-
-  const getRiskColor = (level) => {
-    switch (level) {
-      case 'HIGH': return 'text-red-500';
-      case 'MEDIUM': return 'text-yellow-500';
-      default: return 'text-emerald-500';
-    }
-  };
-
-  const getRiskBg = (level) => {
-    switch (level) {
-      case 'HIGH': return 'bg-red-500';
-      case 'MEDIUM': return 'bg-yellow-500';
-      default: return 'bg-emerald-500';
-    }
-  };
+  const reset = () => { setEmail({ content: '', sender: '', subject: '' }); setResult(null); };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] py-12">
-      <div className="container mx-auto px-6 max-w-6xl">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <FiMail className="w-12 h-12 text-white" />
-            <h1 className="text-4xl font-bold text-white">Email Phishing Scanner</h1>
-          </div>
-          <p className="text-gray-400 text-lg">
-            Paste suspicious email content to analyze for phishing indicators
-          </p>
-        </div>
+    <div style={{ background: 'var(--bone)', minHeight: 'calc(100vh - 56px)' }}>
+      <div style={{ borderBottom: '1px solid var(--ink-08)', padding: '10px 24px', display: 'flex', justifyContent: 'space-between' }} className="t-mono">
+        <div style={{ fontSize: 10, letterSpacing: '0.15em', color: 'var(--ink-60)' }}>§CONSOLE / EMAIL TRIAGE</div>
+        <div style={{ fontSize: 10, letterSpacing: '0.1em' }}><span className="blink" style={{ color: 'var(--signal)' }}>●</span> READY</div>
+      </div>
 
-        <div className="grid md:grid-cols-2 gap-8">
-          {/* Input Section */}
-          <div className="bg-[#111111] border border-gray-800 rounded-lg p-6">
-            <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-              <FiMail className="w-5 h-5" />
-              Email Details
-            </h2>
+      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '40px 24px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: result ? '1fr 1fr' : '1fr', gap: 24 }}>
+          <div className="panel" style={{ padding: 32 }}>
+            <div className="t-eyebrow" style={{ marginBottom: 8 }}>§EML — INPUT</div>
+            <h2 className="h-display-2" style={{ fontSize: 24, margin: '0 0 24px' }}>Paste the email to triage.</h2>
 
-            {/* Sender Email */}
-            <div className="mb-4">
-              <label className="block text-sm text-gray-400 mb-2">
-                Sender Email (Optional)
-              </label>
-              <input
-                type="email"
-                value={senderEmail}
-                onChange={(e) => setSenderEmail(e.target.value)}
-                placeholder="support@example.com"
-                className="w-full bg-[#0a0a0a] border border-gray-800 rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-gray-700"
-              />
-            </div>
+            <label className="t-eyebrow" style={{ display: 'block', marginTop: 16 }}>Sender (optional)</label>
+            <input type="email" value={email.sender} onChange={(e) => setEmail({ ...email, sender: e.target.value })} placeholder="from@example.com" className="field" />
 
-            {/* Subject */}
-            <div className="mb-4">
-              <label className="block text-sm text-gray-400 mb-2">
-                Subject Line (Optional)
-              </label>
-              <input
-                type="text"
-                value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-                placeholder="Urgent: Verify your account"
-                className="w-full bg-[#0a0a0a] border border-gray-800 rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-gray-700"
-              />
-            </div>
+            <label className="t-eyebrow" style={{ display: 'block', marginTop: 20 }}>Subject (optional)</label>
+            <input type="text" value={email.subject} onChange={(e) => setEmail({ ...email, subject: e.target.value })} placeholder="Urgent action required" className="field" />
 
-            {/* Email Content */}
-            <div className="mb-6">
-              <label className="block text-sm text-gray-400 mb-2">
-                Email Content *
-              </label>
-              <textarea
-                value={emailContent}
-                onChange={(e) => setEmailContent(e.target.value)}
-                placeholder="Paste the full email content here..."
-                rows={12}
-                className="w-full bg-[#0a0a0a] border border-gray-800 rounded-lg px-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-gray-700 resize-none font-mono text-sm"
-              />
-              <p className="text-xs text-gray-600 mt-2">
-                Include all text, links, and formatting
-              </p>
-            </div>
+            <label className="t-eyebrow" style={{ display: 'block', marginTop: 20 }}>Email body</label>
+            <textarea
+              value={email.content}
+              onChange={(e) => setEmail({ ...email, content: e.target.value })}
+              placeholder="Paste the full email content here..."
+              className="field"
+              style={{ minHeight: 220, resize: 'vertical', fontFamily: 'var(--type-mono)', fontSize: 13, lineHeight: 1.5 }}
+            />
 
-            {/* Buttons */}
-            <div className="flex gap-3">
-              <button
-                onClick={handleAnalyze}
-                disabled={isAnalyzing || !emailContent.trim()}
-                className="flex-1 bg-white text-black py-3 rounded-lg font-semibold hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isAnalyzing ? 'Analyzing...' : 'Analyze Email'}
+            {error && <div className="t-mono" style={{ marginTop: 12, fontSize: 12, color: 'var(--signal)' }}>! {error}</div>}
+
+            <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
+              <button onClick={analyze} disabled={analyzing} className="btn-primary" style={{ flex: 1 }}>
+                {analyzing ? 'TRIAGING...' : 'ANALYZE EMAIL →'}
               </button>
-              <button
-                onClick={handleClear}
-                className="px-6 bg-[#1a1a1a] text-white py-3 rounded-lg font-semibold border border-gray-800 hover:bg-[#222222] transition-colors"
-              >
-                Clear
-              </button>
+              <button onClick={reset} className="btn-ghost">CLEAR</button>
             </div>
           </div>
 
-          {/* Results Section */}
-          <div className="bg-[#111111] border border-gray-800 rounded-lg p-6">
-            <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-              <BsShieldCheck className="w-5 h-5" />
-              Analysis Results
-            </h2>
-
-            {!results && !isAnalyzing && (
-              <div className="flex flex-col items-center justify-center h-[500px] text-center">
-                <FiMail className="w-16 h-16 text-gray-700 mb-4" />
-                <p className="text-gray-500">
-                  Paste email content and click "Analyze Email" to see results
-                </p>
-              </div>
-            )}
-
-            {isAnalyzing && (
-              <div className="flex flex-col items-center justify-center h-[500px]">
-                <div className="w-12 h-12 border-4 border-gray-800 border-t-white rounded-full animate-spin mb-4"></div>
-                <p className="text-gray-400">Analyzing email for threats...</p>
-              </div>
-            )}
-
-            {results && (
-              <div className="space-y-4">
-                {/* Risk Score */}
-                <div className={`p-4 rounded-lg border ${
-                  results.riskLevel === 'HIGH' ? 'bg-red-500/10 border-red-500/30' :
-                  results.riskLevel === 'MEDIUM' ? 'bg-yellow-500/10 border-yellow-500/30' :
-                  'bg-emerald-500/10 border-emerald-500/30'
-                }`}>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-gray-400">Risk Level</span>
-                    <span className={`text-2xl font-bold ${getRiskColor(results.riskLevel)}`}>
-                      {results.riskLevel}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-400">Risk Score</span>
-                    <span className="text-xl font-semibold text-white">
-                      {results.riskScore}/100
-                    </span>
-                  </div>
-                  <div className="w-full bg-gray-800 rounded-full h-2 mt-3">
-                    <div
-                      className={`h-2 rounded-full ${getRiskBg(results.riskLevel)}`}
-                      style={{ width: `${results.riskScore}%` }}
-                    ></div>
-                  </div>
-                </div>
-
-                {/* Threats Detected */}
-                {results.threats && results.threats.length > 0 && (
-                  <div className="bg-[#0a0a0a] border border-gray-800 rounded-lg p-4">
-                    <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-                      <FiAlertTriangle className="w-4 h-4 text-red-500" />
-                      Threats Detected
-                    </h3>
-                    <ul className="space-y-2">
-                      {results.threats.map((threat, idx) => (
-                        <li key={idx} className="flex items-start gap-2 text-sm text-gray-400">
-                          <FiXCircle className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
-                          <span>{threat}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {/* Suspicious Keywords */}
-                {results.suspiciousKeywords && results.suspiciousKeywords.length > 0 && (
-                  <div className="bg-[#0a0a0a] border border-gray-800 rounded-lg p-4">
-                    <h3 className="text-sm font-semibold text-white mb-3">
-                      Suspicious Keywords
-                    </h3>
-                    <div className="flex flex-wrap gap-2">
-                      {results.suspiciousKeywords.map((keyword, idx) => (
-                        <span
-                          key={idx}
-                          className="px-3 py-1 bg-yellow-500/20 text-yellow-500 text-xs rounded-full border border-yellow-500/30"
-                        >
-                          {keyword}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Links Found */}
-                {results.linksFound && results.linksFound.length > 0 && (
-                  <div className="bg-[#0a0a0a] border border-gray-800 rounded-lg p-4">
-                    <h3 className="text-sm font-semibold text-white mb-3">
-                      Links Found
-                    </h3>
-                    <div className="space-y-2 max-h-40 overflow-y-auto">
-                      {results.linksFound.map((link, idx) => (
-                        <div key={idx} className="text-xs text-gray-400 break-all bg-[#111111] p-2 rounded border border-gray-800">
-                          {link}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Recommendations */}
-                {results.recommendations && results.recommendations.length > 0 && (
-                  <div className="bg-[#0a0a0a] border border-gray-800 rounded-lg p-4">
-                    <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-                      <FiCheckCircle className="w-4 h-4 text-emerald-500" />
-                      Recommendations
-                    </h3>
-                    <ul className="space-y-2">
-                      {results.recommendations.map((rec, idx) => (
-                        <li key={idx} className="flex items-start gap-2 text-sm text-gray-400">
-                          <span className="text-emerald-500 mt-0.5">•</span>
-                          <span>{rec}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                {/* AI Analysis */}
-                {results.aiAnalysis && (
-                  <div className="bg-[#0a0a0a] border border-gray-800 rounded-lg p-4">
-                    <h3 className="text-sm font-semibold text-white mb-3">
-                      AI Analysis
-                    </h3>
-                    <p className="text-sm text-gray-400 leading-relaxed whitespace-pre-wrap">
-                      {results.aiAnalysis}
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+          {result && <EmailResult result={result} />}
         </div>
       </div>
+    </div>
+  );
+};
+
+const EmailResult = ({ result }) => {
+  const tone = result.riskLevel === 'HIGH' ? 'signal' : result.riskLevel === 'MEDIUM' ? 'ink' : 'bone';
+  return (
+    <div>
+      <div className={`verdict verdict-${tone}`} style={{ padding: 24 }}>
+        <div className="t-eyebrow" style={{ color: tone === 'bone' ? 'var(--ink-60)' : 'var(--bone-60)' }}>§EMAIL — VERDICT</div>
+        <h2 className="h-display" style={{ fontSize: 48, margin: '12px 0 0' }}>{result.riskLevel}</h2>
+        <div style={{ fontFamily: 'var(--type-display)', fontWeight: 700, fontSize: 56, lineHeight: 1, marginTop: 12 }}>
+          {result.riskScore}<span style={{ fontSize: 16, opacity: 0.6, fontWeight: 500 }}>/100</span>
+        </div>
+      </div>
+
+      {result.threats?.length > 0 && (
+        <div className="panel" style={{ padding: 24, marginTop: 16 }}>
+          <div className="t-eyebrow" style={{ marginBottom: 12 }}>§THREATS — {result.threats.length}</div>
+          {result.threats.map((t, i) => (
+            <div key={i} className="t-mono" style={{ fontSize: 12, padding: '8px 0', borderTop: i === 0 ? 0 : '1px solid var(--ink-08)' }}>
+              <span style={{ color: 'var(--signal)', marginRight: 12 }}>!</span>{t}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {result.suspiciousKeywords?.length > 0 && (
+        <div className="panel" style={{ padding: 24, marginTop: 16 }}>
+          <div className="t-eyebrow" style={{ marginBottom: 12 }}>§KEYWORDS</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            {result.suspiciousKeywords.map((k, i) => <span key={i} className="chip chip-mute">{k}</span>)}
+          </div>
+        </div>
+      )}
+
+      {result.linksFound?.length > 0 && (
+        <div className="panel" style={{ padding: 24, marginTop: 16 }}>
+          <div className="t-eyebrow" style={{ marginBottom: 12 }}>§LINKS — {result.linksFound.length}</div>
+          <div className="t-mono" style={{ fontSize: 11, wordBreak: 'break-all', maxHeight: 200, overflow: 'auto' }}>
+            {result.linksFound.map((l, i) => <div key={i} style={{ padding: 4, borderTop: i === 0 ? 0 : '1px solid var(--ink-08)' }}>{l}</div>)}
+          </div>
+        </div>
+      )}
+
+      {result.recommendations?.length > 0 && (
+        <div className="panel" style={{ padding: 24, marginTop: 16 }}>
+          <div className="t-eyebrow" style={{ marginBottom: 12 }}>§ACTIONS</div>
+          {result.recommendations.map((r, i) => (
+            <div key={i} style={{ padding: '6px 0', fontSize: 13, borderTop: i === 0 ? 0 : '1px solid var(--ink-08)' }}>
+              <span style={{ color: 'var(--signal)', marginRight: 10 }}>→</span>{r}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {result.aiAnalysis && (
+        <div className="panel" style={{ padding: 24, marginTop: 16, background: 'var(--ink)', color: 'var(--bone)' }}>
+          <div className="t-eyebrow" style={{ marginBottom: 12, color: 'var(--bone-60)' }}>§AI ANALYSIS</div>
+          <p style={{ fontSize: 14, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{result.aiAnalysis}</p>
+        </div>
+      )}
     </div>
   );
 };

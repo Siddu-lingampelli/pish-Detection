@@ -17,47 +17,29 @@ import './index.css';
 function App() {
   return (
     <Router>
-      <div className="min-h-screen bg-[#0a0a0a]">
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<Landing />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          
-          {/* URL Scanner - Public (no login required) */}
-          <Route path="/scanner" element={<><Navbar /><div className="container mx-auto px-6 py-12"><Home /></div></>} />
-          
-          {/* Protected Routes - Login Required */}
-          <Route path="/qr-scanner" element={
-            <ProtectedRoute>
-              <Navbar /><div className="py-12"><QRScanner /></div>
-            </ProtectedRoute>
-          } />
-          <Route path="/screenshot-analyzer" element={
-            <ProtectedRoute>
-              <Navbar /><div className="py-12"><ScreenshotAnalysis /></div>
-            </ProtectedRoute>
-          } />
-          <Route path="/email-scanner" element={
-            <ProtectedRoute>
-              <Navbar /><EmailScanner />
-            </ProtectedRoute>
-          } />
-          <Route path="/history" element={
-            <ProtectedRoute>
-              <Navbar /><div className="container mx-auto px-6 py-12"><History /></div>
-            </ProtectedRoute>
-          } />
-          <Route path="/analytics" element={
-            <ProtectedRoute>
-              <Navbar /><div className="container mx-auto px-6 py-12"><Analytics /></div>
-            </ProtectedRoute>
-          } />
-        </Routes>
-        
-        {/* Global AI Assistant - Available on all pages */}
-        <AIAssistant />
-      </div>
+      <Routes>
+        <Route path="/" element={<Landing />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/scanner" element={<><Navbar /><Home /></>} />
+
+        <Route path="/qr-scanner" element={
+          <ProtectedRoute><><Navbar /><QRScanner /></></ProtectedRoute>
+        } />
+        <Route path="/screenshot-analyzer" element={
+          <ProtectedRoute><><Navbar /><ScreenshotAnalysis /></></ProtectedRoute>
+        } />
+        <Route path="/email-scanner" element={
+          <ProtectedRoute><><Navbar /><EmailScanner /></></ProtectedRoute>
+        } />
+        <Route path="/history" element={
+          <ProtectedRoute><><Navbar /><History /></></ProtectedRoute>
+        } />
+        <Route path="/analytics" element={
+          <ProtectedRoute><><Navbar /><Analytics /></></ProtectedRoute>
+        } />
+      </Routes>
+      <AIAssistant />
     </Router>
   );
 }

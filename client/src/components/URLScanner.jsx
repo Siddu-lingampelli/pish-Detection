@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FaSearch, FaSpinner } from 'react-icons/fa';
+import { FaSearch, FaSpinner, FaArrowRight } from 'react-icons/fa';
 
 const URLScanner = ({ onScan, loading }) => {
   const [url, setUrl] = useState('');
@@ -8,102 +8,75 @@ const URLScanner = ({ onScan, loading }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     setError('');
-
-    if (!url.trim()) {
-      setError('Please enter a URL');
-      return;
-    }
-
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      setError('URL must start with http:// or https://');
-      return;
-    }
-
+    if (!url.trim()) { setError('URL required'); return; }
+    if (!/^https?:\/\//i.test(url.trim())) { setError('Must start with http:// or https://'); return; }
     onScan(url.trim());
   };
 
-  const handleClear = () => {
-    setUrl('');
-    setError('');
-  };
-
   return (
-    <div className="bg-[#111111] border border-gray-800 rounded-lg p-8 max-w-3xl mx-auto">
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold text-white mb-2">URL Threat Scanner</h2>
-        <p className="text-gray-400 text-sm">
-          Enter a URL for comprehensive threat analysis
-        </p>
+    <div className="panel" style={{ padding: 40 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 24 }}>
+        <div>
+          <div className="t-eyebrow" style={{ marginBottom: 8 }}>§URL — INPUT</div>
+          <h2 className="h-display-2" style={{ fontSize: 28, margin: 0 }}>Submit a target URL for analysis.</h2>
+        </div>
+        <div className="t-mono" style={{ fontSize: 11, color: 'var(--ink-60)' }}>
+          7 LAYERS · ~800MS
+        </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
-          <label htmlFor="url" className="block text-sm font-medium text-gray-400 mb-3">
-            Target URL
-          </label>
-          <input
-            type="text"
-            id="url"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            placeholder="https://example.com"
-            className="w-full px-4 py-3 bg-black border border-gray-800 rounded-lg text-white placeholder-gray-600 focus:outline-none focus:border-white transition-colors"
-            disabled={loading}
-          />
-          {error && (
-            <p className="text-red-500 text-sm mt-3">{error}</p>
-          )}
-        </div>
-
-        <div className="flex gap-3">
-          <button
-            type="submit"
-            disabled={loading}
-            className={`flex-1 flex items-center justify-center gap-3 px-6 py-3 rounded-lg font-medium transition-colors ${
-              loading
-                ? 'bg-gray-800 text-gray-500 cursor-not-allowed'
-                : 'bg-white text-black hover:bg-gray-200'
-            }`}
-          >
-            {loading ? (
-              <>
-                <FaSpinner className="animate-spin" />
-                <span>Analyzing...</span>
-              </>
-            ) : (
-              <>
-                <FaSearch />
-                <span>Scan URL</span>
-              </>
-            )}
-          </button>
-
-          <button
-            type="button"
-            onClick={handleClear}
-            disabled={loading}
-            className="px-6 py-3 bg-transparent border border-gray-800 text-gray-400 hover:text-white hover:border-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Clear
+      <form onSubmit={handleSubmit}>
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 16 }}>
+          <div style={{ flex: 1 }}>
+            <label className="t-eyebrow" htmlFor="url">Target</label>
+            <input
+              id="url"
+              type="text"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="https://example.com/login"
+              className="field"
+              disabled={loading}
+              style={{ fontFamily: 'var(--type-mono)' }}
+            />
+          </div>
+          <button type="submit" disabled={loading} className="btn-primary" style={{ height: 52, padding: '0 28px' }}>
+            {loading ? <><FaSpinner className="animate-spin" /> ANALYZING</> : <>SCAN <FaArrowRight /></>}
           </button>
         </div>
+        {error && (
+          <div style={{ marginTop: 16, color: 'var(--signal)', fontFamily: 'var(--type-mono)', fontSize: 12 }}>
+            ! {error}
+          </div>
+        )}
       </form>
 
-      <div className="mt-8 pt-8 border-t border-gray-800">
-        <p className="text-sm font-medium text-gray-400 mb-4">Test URLs</p>
-        <div className="flex flex-wrap gap-2">
+      <div style={{ marginTop: 32, paddingTop: 24, borderTop: '1px solid var(--ink-08)' }}>
+        <div className="t-eyebrow" style={{ marginBottom: 12 }}>SAMPLE TARGETS</div>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           {[
-            { label: 'Legitimate', url: 'https://www.google.com' },
-            { label: 'Suspicious', url: 'http://secure-paypa1-login.tk' },
-            { label: 'Brand typo', url: 'https://www.go0gle.com' }
-          ].map((test, index) => (
+            { label: 'Legitimate', url: 'https://www.google.com', tone: 'ink' },
+            { label: 'Suspicious TLD', url: 'http://secure-paypa1-login.tk', tone: 'ink' },
+            { label: 'Brand typo', url: 'https://www.go0gle.com', tone: 'ink' }
+          ].map((t, i) => (
             <button
-              key={index}
-              onClick={() => setUrl(test.url)}
-              disabled={loading}
-              className="text-sm px-3 py-1.5 bg-[#1a1a1a] border border-gray-800 text-gray-400 hover:text-white hover:border-white rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              key={i}
+              type="button"
+              onClick={() => setUrl(t.url)}
+              className="focus-ring"
+              style={{
+                fontFamily: 'var(--type-mono)',
+                fontSize: 11,
+                padding: '6px 12px',
+                border: '1px solid var(--ink-16)',
+                background: 'transparent',
+                cursor: 'pointer',
+                transition: 'all 120ms'
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--ink)'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--ink-16)'; }}
             >
-              {test.label}
+              <span style={{ color: 'var(--ink-60)' }}>{t.label}:</span> {t.url}
             </button>
           ))}
         </div>

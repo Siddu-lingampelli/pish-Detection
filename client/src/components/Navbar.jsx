@@ -1,157 +1,108 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { FaShieldAlt, FaLink, FaHistory, FaChartBar, FaQrcode } from 'react-icons/fa';
-import { FiLogOut, FiUser } from 'react-icons/fi';
 import { getToken, getUser, clearAuth } from '../services/api';
+
+const links = [
+  { to: '/scanner', code: '01', label: 'URL' },
+  { to: '/qr-scanner', code: '02', label: 'QR' },
+  { to: '/screenshot-analyzer', code: '03', label: 'IMG' },
+  { to: '/email-scanner', code: '04', label: 'EML' },
+  { to: '/history', code: '05', label: 'LOG' },
+  { to: '/analytics', code: '06', label: 'DATA' }
+];
+
+const Clock = () => {
+  const [t, setT] = useState(() => new Date());
+  useEffect(() => {
+    const id = setInterval(() => setT(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  return (
+    <span className="t-mono" style={{ fontSize: 10, letterSpacing: '0.1em' }}>
+      {t.toISOString().slice(11, 19)}<span className="blink">_</span>
+    </span>
+  );
+};
 
 const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const user = getUser();
-  const isAuthenticated = !!getToken();
-
-  const isActive = (path) => location.pathname === path;
-
-  const handleLogout = () => {
-    clearAuth();
-    navigate('/');
-  };
+  const isAuth = !!getToken();
 
   return (
-    <nav className="bg-[#0a0a0a] border-b border-gray-800 sticky top-0 z-50 backdrop-blur-sm bg-opacity-90">
-      <div className="container mx-auto px-6">
-        <div className="flex justify-between items-center py-4">
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-white rounded-md flex items-center justify-center">
-              <FaShieldAlt className="text-lg text-black" />
-            </div>
-            <div>
-              <div className="text-base font-semibold text-white">PhishGuard</div>
-            </div>
-          </Link>
-
-          {/* Navigation Links */}
-          <div className="flex gap-2">
-            <Link to="/">
-              <button
-                className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-                  isActive('/')
-                    ? 'bg-white text-black'
-                    : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                Home
-              </button>
-            </Link>
-
-            <Link to="/scanner">
-              <button
-                className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-                  isActive('/scanner')
-                    ? 'bg-white text-black'
-                    : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                URL Scanner
-              </button>
-            </Link>
-
-            <Link to="/qr-scanner">
-              <button
-                className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-                  isActive('/qr-scanner')
-                    ? 'bg-white text-black'
-                    : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                QR Scanner
-              </button>
-            </Link>
-
-            <Link to="/screenshot-analyzer">
-              <button
-                className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-                  isActive('/screenshot-analyzer')
-                    ? 'bg-white text-black'
-                    : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                AI Screenshot
-              </button>
-            </Link>
-
-            <Link to="/email-scanner">
-              <button
-                className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-                  isActive('/email-scanner')
-                    ? 'bg-white text-black'
-                    : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                Email Scanner
-              </button>
-            </Link>
-
-            <Link to="/history">
-              <button
-                className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-                  isActive('/history')
-                    ? 'bg-white text-black'
-                    : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                History
-              </button>
-            </Link>
-
-            <Link to="/analytics">
-              <button
-                className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-                  isActive('/analytics')
-                    ? 'bg-white text-black'
-                    : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                Analytics
-              </button>
-            </Link>
+    <header style={{
+      borderBottom: '1px solid var(--ink)',
+      background: 'var(--bone)',
+      position: 'sticky',
+      top: 0,
+      zIndex: 50
+    }}>
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'auto 1fr auto',
+        alignItems: 'center',
+        padding: '0 24px',
+        height: 56
+      }}>
+        <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{
+            width: 28, height: 28,
+            background: 'var(--ink)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: 'var(--bone)',
+            fontFamily: 'var(--type-display)', fontWeight: 700, fontSize: 14
+          }}>P</div>
+          <div style={{ lineHeight: 1.1 }}>
+            <div className="h-display-2" style={{ fontSize: 16 }}>PHISHGUARD</div>
+            <div className="t-mono" style={{ fontSize: 9, color: 'var(--ink-60)', letterSpacing: '0.15em' }}>CONSOLE / v2.4</div>
           </div>
+        </Link>
 
-          {/* Auth Buttons */}
-          <div className="flex items-center gap-3">
-            {isAuthenticated ? (
-              <>
-                <div className="flex items-center gap-2 px-3 py-2 bg-[#111111] border border-gray-800 rounded-md">
-                  <FiUser className="text-gray-400" />
-                  <span className="text-sm text-white">{user?.name || 'User'}</span>
-                </div>
-                <button
-                  onClick={handleLogout}
-                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-400 hover:text-white rounded-md transition-colors"
-                >
-                  <FiLogOut />
-                  Logout
-                </button>
-              </>
-            ) : (
-              <>
-                <Link to="/login">
-                  <button className="px-4 py-2 text-sm font-medium text-gray-400 hover:text-white rounded-md transition-colors">
-                    Login
-                  </button>
-                </Link>
-                <Link to="/register">
-                  <button className="px-4 py-2 text-sm font-medium bg-white text-black rounded-md hover:bg-gray-200 transition-colors">
-                    Sign Up
-                  </button>
-                </Link>
-              </>
-            )}
-          </div>
+        <nav style={{ display: 'flex', justifyContent: 'center', gap: 0, height: '100%' }}>
+          {links.map(l => {
+            const active = location.pathname === l.to;
+            return (
+              <Link key={l.to} to={l.to} style={{
+                display: 'flex',
+                alignItems: 'center',
+                height: '100%',
+                padding: '0 18px',
+                borderLeft: '1px solid var(--ink-08)',
+                borderRight: '1px solid var(--ink-08)',
+                background: active ? 'var(--ink)' : 'transparent',
+                color: active ? 'var(--bone)' : 'var(--ink)',
+                transition: 'background 120ms'
+              }}>
+                <span className="t-mono" style={{ fontSize: 10, color: active ? 'var(--bone-60)' : 'var(--ink-60)', marginRight: 8 }}>
+                  {l.code}
+                </span>
+                <span style={{ fontFamily: 'var(--type-display)', fontWeight: 600, fontSize: 12, letterSpacing: '0.1em' }}>
+                  {l.label}
+                </span>
+              </Link>
+            );
+          })}
+        </nav>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <Clock />
+          {isAuth ? (
+            <>
+              <span className="t-mono" style={{ fontSize: 11, color: 'var(--ink-60)' }}>{user?.name || 'OPERATOR'}</span>
+              <button onClick={() => { clearAuth(); navigate('/'); }} className="btn-ghost" style={{ padding: '6px 12px', fontSize: 10 }}>
+                Sign out
+              </button>
+            </>
+          ) : (
+            <>
+              <Link to="/login"><button className="btn-ghost" style={{ padding: '6px 12px', fontSize: 10 }}>Sign in</button></Link>
+              <Link to="/register"><button className="btn-primary" style={{ padding: '6px 12px', fontSize: 10 }}>Get access</button></Link>
+            </>
+          )}
         </div>
       </div>
-    </nav>
+    </header>
   );
 };
 

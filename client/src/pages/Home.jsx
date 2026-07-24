@@ -12,44 +12,45 @@ const Home = () => {
     setLoading(true);
     setError(null);
     setScanResult(null);
-
     try {
       const response = await scanURL(url);
-      
-      if (response.success) {
-        setScanResult(response.data);
-      } else {
-        setError(response.message || 'Failed to scan URL');
-      }
+      if (response.success) setScanResult(response.data);
+      else setError(response.message || 'Scan failed');
     } catch (err) {
-      setError(
-        err.response?.data?.message ||
-        'Failed to scan URL. Please check your connection and try again.'
-      );
+      setError(err.response?.data?.message || 'Failed to scan URL');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen">
-      <div className="container mx-auto px-6 py-12 max-w-5xl">
-        {/* Scanner */}
-        <div className="mb-8">
-          <URLScanner onScan={handleScan} loading={loading} />
+    <div style={{ background: 'var(--bone)', minHeight: 'calc(100vh - 56px)' }}>
+      {/* Status ribbon */}
+      <div style={{
+        borderBottom: '1px solid var(--ink-08)',
+        padding: '10px 24px',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center'
+      }} className="t-mono">
+        <div style={{ fontSize: 10, letterSpacing: '0.15em', color: 'var(--ink-60)' }}>
+          §CONSOLE / URL SCANNER
         </div>
+        <div style={{ fontSize: 10, letterSpacing: '0.1em' }}>
+          <span className="blink" style={{ color: 'var(--signal)' }}>●</span> READY
+        </div>
+      </div>
 
-        {/* Error Message */}
+      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '40px 24px' }}>
+        <URLScanner onScan={handleScan} loading={loading} />
+
         {error && (
-          <div className="bg-red-900/20 border border-red-800 rounded-lg p-4 mb-8">
-            <p className="text-red-400 text-sm">{error}</p>
+          <div className="panel" style={{ marginTop: 24, padding: 20, background: 'var(--signal)', color: 'var(--bone)', borderColor: 'var(--signal)' }}>
+            <div className="t-mono" style={{ fontSize: 12 }}>! {error}</div>
           </div>
         )}
 
-        {/* Scan Result */}
-        {scanResult && (
-          <ScanResult result={scanResult} />
-        )}
+        {scanResult && <ScanResult result={scanResult} />}
       </div>
     </div>
   );
