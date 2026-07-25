@@ -4,7 +4,7 @@ import screenshotAnalysisService from '../services/screenshotAnalysisService.js'
 
 import { rateLimit } from '../middleware/rateLimit.js';
 
-
+const router = express.Router();
 
 // Screenshot analysis rate limit: 10 per minute
 const screenshotRateLimit = rateLimit({ windowMs: 60000, max: 10, message: 'Too many screenshot analysis requests.' });
