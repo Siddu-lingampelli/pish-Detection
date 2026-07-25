@@ -48,8 +48,13 @@ You can use **both A and B** for redundancy.
 
 ## Where data lives
 
-Users and scan history persist to `server/data/store.json` (file-based).
-**Render free tier disk is ephemeral** — data survives restarts but not full redeploys. For multi-day survival, upgrade to Render's persistent disk ($1/mo) or use external DB.
+**No server database needed.** All user auth, sessions, and scan history are stored in the browser's `localStorage`. This means:
+- **No persistent disk required** — Render free tier works perfectly
+- **No external DB** — everything is client-side
+- **Data is private per-device** — clearing browser cache resets it
+- **Works offline** after initial page load
+
+The server only handles URL scan requests via the `/api/scan` endpoint (uses VirusTotal, URLScan.io, Cerebras APIs).
 
 ## Custom domain
 
