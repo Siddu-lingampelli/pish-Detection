@@ -55,7 +55,7 @@ class EmailAnalysisService {
 
       if (analysisResults.riskScore >= 70) {
         analysisResults.riskLevel = 'HIGH';
-      } else if (analysisResults.riskScore >= 40) {
+      } else if (analysisResults.riskScore >= 30) {
         analysisResults.riskLevel = 'MEDIUM';
       } else {
         analysisResults.riskLevel = 'LOW';
@@ -86,12 +86,17 @@ class EmailAnalysisService {
       if (/^(?:\d{1,3}\.){3}\d{1,3}$/.test(hostname)) issues.push('IP address link');
 
       const suspiciousTLDs = ['.tk','.ml','.ga','.cf','.gq','.xyz','.top','.work','.click','.download','.review','.stream','.bid','.trade','.webcam','.science','.date','.racing','.win','.party','.loan','.men','.website','.space','.site','.live','.online','.tech'];
-      const tld = '.' + hostname.split('.').pop();
+      const knownTLDs = ['com','org','net','edu','gov','mil','io','co','uk','de','jp','fr','au','ca','us','eu','ru','cn','in','br','it','es','nl','se','no','fi','dk','pl','be','at','ch','gr','ie','nz','sg','hk','kr','my','ph','th','vn','za','ar','cl','co','mx','pe','ae','il','sa','qa','ng','ke'];
+      const parts = hostname.split('.');
+      const tld = '.' + parts[parts.length - 1];
+      const domainName = parts.length >= 2 ? parts[parts.length - 2] : parts[0];
+
       if (suspiciousTLDs.includes(tld)) issues.push(`Suspicious TLD (${tld})`);
 
-      const domain = hostname.split('.').slice(-2).join('.');
-      const domainName = hostname.split('.')[hostname.split('.').length - 2];
-      if (domainName && /^[a-z0-9]{15,}$/i.test(domainName)) issues.push('Random-looking domain name');
+      const domainWithoutTLD = parts.length >= 2 ? parts.slice(-2).join('.') : hostname;
+
+      const alphaNumName = domainName.replace(/[^a-z0-9]/gi, '');
+      if (alphaNumName && alphaNumName.length >= 10 && /^[a-z]{10,}$/i.test(alphaNumName)) issues.push('Random-looking domain name');
 
       const knownBrands = ['paypal','google','microsoft','apple','amazon','netflix','facebook','instagram','linkedin','twitter','whatsapp','dropbox','adobe','samsung','alibaba','ebay','dhl','fedex','ups','icloud','steam','spotify','airbnb','uber'];
       if (domainName) {
@@ -104,9 +109,13 @@ class EmailAnalysisService {
         }
       }
 
-      if (hostname.split('.').length > 4) issues.push('Excessive subdomains');
+      if (parts.length > 4) issues.push('Excessive subdomains');
       if (hostname.length > 40) issues.push('Unusually long domain');
       if (/[^\x00-\x7F]/.test(hostname)) issues.push('Non-ASCII characters (homograph attack)');
+
+      if (domainName && !knownTLDs.includes(parts[parts.length - 1]) && !suspiciousTLDs.includes(tld) && parts.length === 2) {
+        issues.push('Uncommon domain extension');
+      }
 
     } catch { issues.push('Invalid URL format'); }
     return issues;
@@ -139,8 +148,23 @@ class EmailAnalysisService {
     ];
 
     const found = [];
-    const fullText = `${subject} ${emailContent}`.toLowerCase();
-    suspiciousPatterns.forEach(p => { if (fullText.includes(p)) found.push(p); });
+    const combined = `${subject} ${emailContent}`;
+    const normalized = combined.toLowerCase().replace(/\s+/g, ' ').trim();
+    suspiciousPatterns.forEach(p => { if (normalized.includes(p)) found.push(p); });
+
+    const leetWords = ['u ', ' ur ', ' plz ', ' pwd ', ' pw ', ' btw ', ' thx '];
+    const leetText = ' ' + normalized.replace(/[^a-z0-9 ]/g, '') + ' ';
+    if (leetWords.some(w => leetText.includes(w))) {
+      found.push('informal/abbreviated language');
+    }
+
+    const wordCount = normalized.split(/\s+/).length;
+    if (found.length === 0 && wordCount < 20) {
+      if (/\b(link|click|login|account|password|verify|update|confirm|secure|bank|payment|access|limited|restricted)\b/.test(normalized)) {
+        found.push('suspicious context (short message with trigger words)');
+      }
+    }
+
     return found;
   }
 
@@ -161,14 +185,18 @@ class EmailAnalysisService {
       result.isSuspicious = true;
       result.reasons.push('Unusually long email address');
     }
-    const freeDomains = ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com'];
+    const freeDomains = ['gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'aol.com', 'mail.com', 'protonmail.com', 'tutanota.com'];
     const domain = email.split('@')[1];
+    const username = email.split('@')[0];
     if (freeDomains.includes(domain)) {
-      const username = email.split('@')[0];
       if (username.includes('support') || username.includes('service') || username.includes('admin')) {
         result.isSuspicious = true;
         result.reasons.push('Business-looking address using free email provider');
       }
+    }
+    if (/^[a-z]+\d{3,}$/i.test(username)) {
+      result.isSuspicious = true;
+      result.reasons.push('Email has auto-generated pattern (letters + trailing digits)');
     }
     return result;
   }
@@ -227,8 +255,12 @@ Respond ONLY with valid JSON (no markdown):
       recommendations.push('Look for grammar/spelling errors');
       recommendations.push('Check if email is personalized to you');
     } else {
-      recommendations.push('Email appears relatively safe');
-      recommendations.push('Still verify sender if requesting sensitive actions');
+      if (analysis.riskScore > 15) {
+        recommendations.push('Some suspicious signals detected - verify before trusting');
+        recommendations.push('Do not click links unless sender is verified');
+      } else {
+        recommendations.push('Email appears relatively safe');
+      }
       recommendations.push('Be cautious with any links or attachments');
     }
     if (analysis.linksFound.length > 0) {
