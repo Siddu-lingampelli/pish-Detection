@@ -1,6 +1,20 @@
 # PhishGuard
 
+<p align="center">
+  <a href="https://pish-detection.onrender.com/">
+    <img src="https://img.shields.io/badge/Live-Demo-00C853?style=for-the-badge&logo=render" alt="Live Demo">
+  </a>
+  <a href="https://github.com/Siddu-lingampelli/pish-Detection">
+    <img src="https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github" alt="GitHub">
+  </a>
+  <a href="LICENSE">
+    <img src="https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge" alt="MIT License">
+  </a>
+</p>
+
 AI-powered real-time phishing detection — scan URLs, emails, QR codes, and screenshots for threats.
+
+**Live app:** [https://pish-detection.onrender.com/](https://pish-detection.onrender.com/)
 
 ---
 
@@ -32,10 +46,10 @@ AI-powered real-time phishing detection — scan URLs, emails, QR codes, and scr
 ### Data Flow
 
 ```
-Client ── POST /api/scan ──> Express ──> VirusTotal + URLScan.io ──> Scoring Engine ──> Cerebras AI ──> Result
-Client ── POST /api/email ──> Express ──> Link Analyzer + Keyword Engine ──> Cerebras AI ──> Risk Assessment
-Client ── POST /api/qr ────> Express ──> QR Decode ──> URL Scan Pipeline
-Client ── POST /api/screenshot ──> Express ──> OCR + Vision AI ──> Visual/Text Risk Scoring
+Client -- POST /api/scan --> Express --> VirusTotal + URLScan.io --> Scoring Engine --> Cerebras AI --> Result
+Client -- POST /api/email --> Express --> Link Analyzer + Keyword Engine --> Cerebras AI --> Risk Assessment
+Client -- POST /api/qr ----> Express --> QR Decode --> URL Scan Pipeline
+Client -- POST /api/screenshot --> Express --> OCR + Vision AI --> Visual/Text Risk Scoring
 ```
 
 ---
