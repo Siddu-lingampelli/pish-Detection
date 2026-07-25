@@ -275,6 +275,18 @@ class PhishingDetectionService {
         return { isTyposquatting: true, similarTo: brand, distance: cleanDomain.length - brand.length };
       }
 
+      // Brand with common prefix/suffix (e.g. "support-appleid", "applelogin")
+      if (cleanDomain.includes(brand) && cleanDomain.length - brand.length <= 12) {
+        const brandIdx = cleanDomain.indexOf(brand);
+        const prefix = cleanDomain.slice(0, brandIdx).replace(/[-_.]/g, '');
+        const suffix = cleanDomain.slice(brandIdx + brand.length).replace(/[-_.]/g, '');
+        const isPrefixed = prefix.length > 0 && /^(help|support|login|sign|account|verify|secure|my|app|online|portal|service|info|official|home|id|manage|update|confirm|reset|chat|mail|web|shop|buy|pay|payment|track|order|check|bill|invoice)$/i.test(prefix);
+        const isSuffixed = suffix.length > 0 && /^(help|support|login|sign|account|verify|secure|app|online|portal|service|info|id|manage|update|confirm|reset|chat|mail|pay|payment|track|order|check|bill|invoice)$/i.test(suffix);
+        if (isPrefixed || isSuffixed) {
+          return { isTyposquatting: true, similarTo: brand, distance: cleanDomain.length - brand.length };
+        }
+      }
+
       // Reverse: brand contains domain — only flag if exactly 1 char missing
       if (brand.length > cleanDomain.length && brand.includes(cleanDomain) && brand.length - cleanDomain.length === 1) {
         return { isTyposquatting: true, similarTo: brand, distance: 1 };
