@@ -1,96 +1,167 @@
 import axios from 'axios';
+import { setAuth, clearAuth, getToken, getUser } from './localAuth';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-
-// Memory-only token store. Backed by sessionStorage so tab refresh keeps token
-// without making it readable to any XSS payload that doesn't share the JS realm.
-// NOTE: No browser-side storage is fully XSS-safe — keep server-side hardening
-// (helmet, CSP, validation) as the primary defense.
-let memToken = sessionStorage.getItem('jwt') || null;
-
-let memUser = null;
-try {
-  const raw = sessionStorage.getItem('user');
-  memUser = raw ? JSON.parse(raw) : null;
-} catch { memUser = null; }
-
-export const setAuth = (token, user) => {
-  memToken = token || null;
-  memUser = user || null;
-  if (token) sessionStorage.setItem('jwt', token);
-  else sessionStorage.removeItem('jwt');
-  if (user) sessionStorage.setItem('user', JSON.stringify(user));
-  else sessionStorage.removeItem('user');
-};
-
-export const clearAuth = () => setAuth(null, null);
-
-export const getToken = () => memToken;
-export const getUser = () => memUser;
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: { 'Content-Type': 'application/json' },
-  timeout: 30000,
+  timeout: 30000
 });
 
-api.interceptors.request.use(
-  (config) => {
-    if (memToken) config.headers.Authorization = `Bearer ${memToken}`;
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
+// Attach JWT token to every request when available
+api.interceptors.request.use((config) => {
+  const token = getToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
 
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) clearAuth();
-    if (process.env.NODE_ENV === 'development') {
+    if (import.meta.env.DEV) {
       if (error.response) console.warn('API error:', error.response.status);
       else if (error.request) console.warn('Network error');
+    }
+    // If 401, clear expired session
+    if (error.response?.status === 401) {
+      clearAuth();
     }
     return Promise.reject(error);
   }
 );
 
-export const scanURL = async (url) => (await api.post('/scan', { url })).data;
-export const getHistory = async (params = {}) => (await api.get('/history', { params })).data;
-export const getStats = async () => (await api.get('/stats')).data;
-export const deleteScan = async (id) => (await api.delete(`/history/${id}`)).data;
-export const clearHistory = async () => (await api.delete('/history')).data;
+export const setAuthToken = setAuth;
+export const clearAuthToken = clearAuth;
+export { getToken, getUser, clearAuth };
 
-export const login = async (credentials) => {
-  const data = (await api.post('/auth/login', credentials)).data;
-  if (data?.data?.token) setAuth(data.data.token, data.data.user);
-  return data;
+// ── Scan ──
+
+export const scanURL = async (url) => {
+  const res = (await api.post('/scan', { url })).data;
+  if (res?.success && res.data) {
+    // Also save locally for offline fallback
+    const { saveScan } = await import('./localAuth');
+    saveScan(res.data);
+  }
+  return res;
+};
+
+// ── Auth (server-backed, falls back to local storage) ──
+
+export const login = async (creds) => {
+  // Try server first
+  try {
+    const res = await api.post('/auth/login', creds);
+    const d = res.data;
+    if (d?.success && d.token) {
+      setAuth(d.token, d.user);
+      return { success: true, data: { token: d.token, user: d.user } };
+    }
+  } catch (serverErr) {
+    // Server unavailable — try local fallback
+    if (!serverErr.response || serverErr.code === 'ERR_NETWORK') {
+      const { loginLocal } = await import('./localAuth');
+      const data = await loginLocal(creds);
+      return { success: true, data: { token: data.token, user: data.user } };
+    }
+    throw serverErr;
+  }
 };
 
 export const register = async (userData) => {
-  const data = (await api.post('/auth/register', userData)).data;
-  if (data?.data?.token) setAuth(data.data.token, data.data.user);
-  return data;
+  // Try server first
+  try {
+    const res = await api.post('/auth/register', userData);
+    const d = res.data;
+    if (d?.success && d.token) {
+      setAuth(d.token, d.user);
+      return { success: true, data: { token: d.token, user: d.user } };
+    }
+  } catch (serverErr) {
+    // Server unavailable — try local fallback
+    if (!serverErr.response || serverErr.code === 'ERR_NETWORK') {
+      const { registerLocal } = await import('./localAuth');
+      const data = await registerLocal(userData);
+      return { success: true, data: { token: data.token, user: data.user } };
+    }
+    throw serverErr;
+  }
 };
 
 export const getMe = async () => {
-  if (!memToken) return { success: false, error: 'Not authenticated' };
-  return (await api.get('/auth/me')).data;
+  try {
+    const res = await api.get('/auth/me');
+    return res.data;
+  } catch {
+    // Fallback to local session
+    const u = getUser();
+    if (!u) return { success: false, error: 'Not authenticated' };
+    return { success: true, user: u };
+  }
 };
+
+// ── History & Stats (server-backed, falls back to local) ──
+
+export const getHistory = async (params = {}) => {
+  try {
+    const res = await api.get('/history', { params });
+    return res.data;
+  } catch {
+    const { getLocalHistory } = await import('./localAuth');
+    const r = getLocalHistory(params);
+    return { success: true, data: r };
+  }
+};
+
+export const getStats = async () => {
+  try {
+    const res = await api.get('/stats');
+    return res.data;
+  } catch {
+    const { getLocalStats } = await import('./localAuth');
+    const s = getLocalStats();
+    return { success: true, data: s };
+  }
+};
+
+export const deleteScan = async (id) => {
+  try {
+    const res = await api.delete(`/history/${id}`);
+    return res.data;
+  } catch {
+    const { deleteLocalScan } = await import('./localAuth');
+    const removed = deleteLocalScan(id);
+    if (!removed) return { success: false, message: 'Not found' };
+    return { success: true, message: 'Deleted', data: removed };
+  }
+};
+
+export const clearHistory = async () => {
+  try {
+    const res = await api.delete('/history');
+    return res.data;
+  } catch {
+    const { clearLocalHistory } = await import('./localAuth');
+    const count = clearLocalHistory();
+    return { success: true, message: 'Cleared', data: { deletedCount: count } };
+  }
+};
+
+// ── QR, Screenshot, Email, AI ──
 
 export const scanQR = async (file) => {
   const form = new FormData();
   form.append('qrImage', file);
-  return (await api.post('/qr/scan', form, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  })).data;
+  return (await api.post('/qr/scan', form, { headers: { 'Content-Type': 'multipart/form-data' } })).data;
 };
 
 export const analyzeScreenshot = async (file) => {
   const form = new FormData();
   form.append('screenshot', file);
-  return (await api.post('/screenshot/analyze', form, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  })).data;
+  return (await api.post('/screenshot/analyze', form, { headers: { 'Content-Type': 'multipart/form-data' } })).data;
 };
 
 export const analyzeEmail = async (data) => (await api.post('/email/analyze', data)).data;

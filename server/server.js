@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import dotenv from 'dotenv';
+import 'dotenv/config';
 import helmet from 'helmet';
 import scanRoutes from './routes/scanRoutes.js';
 import qrRoutes from './routes/qrRoutes.js';
@@ -11,8 +11,6 @@ import aiAssistantRoutes from './routes/aiAssistantRoutes.js';
 import emailRoutes from './routes/emailRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import { loadStore } from './store.js';
-
-dotenv.config();
 
 if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
   console.error('FATAL: JWT_SECRET is missing or too short (need at least 32 chars)');
@@ -29,7 +27,9 @@ app.disable('etag');
 app.set('trust proxy', 1);
 
 const isProd = process.env.NODE_ENV === 'production';
-const allowedOrigin = isProd ? (process.env.CLIENT_URL || true) : (process.env.CLIENT_URL || 'http://localhost:3000');
+const allowedOrigin = isProd 
+  ? (process.env.CLIENT_URL || true) 
+  : [/^http:\/\/localhost:\d+$/, process.env.CLIENT_URL].filter(Boolean);
 
 app.use(helmet({
   contentSecurityPolicy: false,

@@ -3,8 +3,13 @@ import multer from 'multer';
 import qrCodeService from '../services/qrCodeService.js';
 import phishingDetectionService from '../services/phishingDetectionService.js';
 import aiExplanationService from '../services/aiExplanationService.js';
+import { rateLimit } from '../middleware/rateLimit.js';
 
 const router = express.Router();
+
+// QR scan rate limit: 15 per minute
+const qrRateLimit = rateLimit({ windowMs: 60000, max: 15, message: 'Too many QR scan requests.' });
+
 
 // Configure multer for memory storage
 const storage = multer.memoryStorage();
@@ -27,7 +32,7 @@ const upload = multer({
  * @desc    Scan QR code from uploaded image and check for phishing
  * @access  Public
  */
-router.post('/scan', (req, res, next) => {
+router.post('/scan', qrRateLimit, (req, res, next) => {
     upload.single('qrImage')(req, res, (err) => {
         if (err) {
             if (err.code === 'LIMIT_FILE_SIZE') {
@@ -180,3 +185,4 @@ function calculateOverallRisk(suspicionAnalysis, phishingResult) {
 }
 
 export default router;
+

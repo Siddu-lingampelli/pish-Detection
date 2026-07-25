@@ -2,7 +2,12 @@ import express from 'express';
 import multer from 'multer';
 import screenshotAnalysisService from '../services/screenshotAnalysisService.js';
 
-const router = express.Router();
+import { rateLimit } from '../middleware/rateLimit.js';
+
+
+
+// Screenshot analysis rate limit: 10 per minute
+const screenshotRateLimit = rateLimit({ windowMs: 60000, max: 10, message: 'Too many screenshot analysis requests.' });
 
 // Configure multer for file uploads
 const storage = multer.memoryStorage();
@@ -24,7 +29,7 @@ const upload = multer({
  * POST /api/screenshot/analyze
  * Analyze a screenshot for phishing indicators
  */
-router.post('/analyze', (req, res, next) => {
+router.post('/analyze', screenshotRateLimit, (req, res, next) => {
   upload.single('screenshot')(req, res, (err) => {
     if (err) {
       if (err.code === 'LIMIT_FILE_SIZE') {
@@ -68,11 +73,11 @@ router.post('/analyze', (req, res, next) => {
     });
 
     } catch (error) {
-        console.error('Screenshot analysis route error:', error?.message || 'unknown');
-        res.status(500).json({
-            success: false,
-            error: 'Failed to analyze screenshot'
-        });
+      console.error('Screenshot analysis route error:', error?.message || 'unknown');
+      res.status(500).json({
+        success: false,
+        error: 'Failed to analyze screenshot'
+      });
     }
 });
 
@@ -91,3 +96,5 @@ router.get('/test', (req, res) => {
 });
 
 export default router;
+
+

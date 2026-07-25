@@ -1,11 +1,12 @@
 import express from 'express';
+import crypto from 'crypto';
 import phishingDetectionService from '../services/phishingDetectionService.js';
 import aiExplanationService from '../services/aiExplanationService.js';
 import urlscanService from '../services/urlscanService.js';
+import { requireAuth } from '../middleware/auth.js';
 import { getScans, addScan, clearScans, deleteScanById } from '../store.js';
 
 const router = express.Router();
-
 const BLOCKED_HOSTS = new Set(['127.0.0.1', 'localhost', '0.0.0.0', '::1', '[::1]']);
 const IPV4_RE = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
 const HOSTNAME_RE = /^[a-z0-9.\-:[\]]+$/i;
@@ -15,11 +16,19 @@ const ipHits = new Map();
 const RATE_WINDOW_MS = 60 * 1000;
 const RATE_MAX = 30;
 const CLEANUP_INTERVAL = 5 * 60 * 1000;
+const MAP_MAX_SIZE = 10000;
 
 setInterval(() => {
   const now = Date.now();
   for (const [ip, rec] of ipHits) {
     if (now > rec.resetAt + RATE_WINDOW_MS) ipHits.delete(ip);
+  }
+  // Prevent unbounded memory growth from many unique IPs
+  if (ipHits.size > MAP_MAX_SIZE) {
+    const entries = [...ipHits.entries()];
+    const sorted = entries.sort((a, b) => a[1].resetAt - b[1].resetAt);
+    const toDelete = sorted.slice(0, sorted.length - MAP_MAX_SIZE / 2);
+    for (const [ip] of toDelete) ipHits.delete(ip);
   }
 }, CLEANUP_INTERVAL).unref();
 
@@ -62,7 +71,7 @@ function isBlockedHost(hostname) {
 }
 
 function genId() {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+  return crypto.randomUUID();
 }
 
 router.post('/scan', rateLimit, async (req, res) => {
@@ -158,7 +167,7 @@ router.get('/urlscan/:scanId', async (req, res) => {
   }
 });
 
-router.get('/history', (req, res) => {
+router.get('/history', requireAuth, (req, res) => {
   try {
     const scans = getScans();
     const { limit, page, result } = req.query;
@@ -187,7 +196,7 @@ router.get('/history', (req, res) => {
   }
 });
 
-router.get('/stats', (req, res) => {
+router.get('/stats', requireAuth, (req, res) => {
   try {
     const scans = getScans();
     const totalScans = scans.length;
@@ -232,7 +241,7 @@ router.get('/stats', (req, res) => {
   }
 });
 
-router.delete('/history/:id', (req, res) => {
+router.delete('/history/:id', requireAuth, (req, res) => {
   try {
     const { id } = req.params;
     if (typeof id !== 'string' || id.length > 64 || !/^[a-z0-9]+$/i.test(id)) {
@@ -250,7 +259,7 @@ router.delete('/history/:id', (req, res) => {
   }
 });
 
-router.delete('/history', (req, res) => {
+router.delete('/history', requireAuth, (req, res) => {
   try {
     const deletedCount = clearScans();
     res.status(200).json({ success: true, message: 'All scan history cleared successfully', data: { deletedCount } });

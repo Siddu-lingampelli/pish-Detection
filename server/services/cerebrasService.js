@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const CEREBRAS_BASE = 'https://api.cerebras.ai/v1';
-const DEFAULT_MODEL = 'gpt-oss-120b';
+const DEFAULT_MODEL = 'gemma-4-31b';
 const VISION_MODEL = 'gemma-4-31b';
 
 class CerebrasService {

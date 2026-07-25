@@ -1,8 +1,12 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
+import dotenv from 'dotenv';
 import { requireAuth } from '../middleware/auth.js';
 import { findUserByEmail, findUserById, addUser } from '../store.js';
+
+dotenv.config();
 
 const router = express.Router();
 
@@ -16,11 +20,19 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const loginAttempts = new Map();
 const MAX_LOGIN_ATTEMPTS = 5;
 const LOGIN_WINDOW_MS = 15 * 60 * 1000;
+const MAP_MAX_SIZE = 10000;
 
 setInterval(() => {
   const now = Date.now();
   for (const [ip, rec] of loginAttempts) {
     if (now - rec.firstAt > LOGIN_WINDOW_MS) loginAttempts.delete(ip);
+  }
+  // Prevent unbounded memory growth
+  if (loginAttempts.size > MAP_MAX_SIZE) {
+    const entries = [...loginAttempts.entries()];
+    const sorted = entries.sort((a, b) => a[1].firstAt - b[1].firstAt);
+    const toDelete = sorted.slice(0, sorted.length - MAP_MAX_SIZE / 2);
+    for (const [ip] of toDelete) loginAttempts.delete(ip);
   }
 }, 5 * 60 * 1000).unref();
 
@@ -63,7 +75,7 @@ router.post('/register', async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = {
-      _id: Date.now().toString(36) + Math.random().toString(36).slice(2, 10),
+      _id: crypto.randomUUID(),
       name: cleanName,
       email: cleanEmail,
       password: hashedPassword,

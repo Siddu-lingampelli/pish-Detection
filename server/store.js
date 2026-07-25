@@ -130,3 +130,14 @@ export function deleteScanById(id) {
 
 process.on('SIGTERM', () => { flush(); process.exit(0); });
 process.on('SIGINT', () => { flush(); process.exit(0); });
+
+// Flush pending writes on crash to prevent data loss
+process.on('uncaughtException', (err) => {
+  console.error('Fatal uncaught exception, flushing store...', err?.message);
+  flush();
+  process.exit(1);
+});
+process.on('unhandledRejection', (reason) => {
+  console.error('Unhandled rejection, flushing store...', reason?.message || reason);
+  flush();
+});

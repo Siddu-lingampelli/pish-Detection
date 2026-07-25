@@ -1,13 +1,18 @@
 import express from 'express';
 import emailAnalysisService from '../services/emailAnalysisService.js';
+import { rateLimit } from '../middleware/rateLimit.js';
 
 const router = express.Router();
+
+// Email analysis rate limit: 20 per minute
+const emailRateLimit = rateLimit({ windowMs: 60000, max: 20, message: 'Too many email analysis requests.' });
+
 
 /**
  * POST /api/email/analyze
  * Analyze email for phishing indicators
  */
-router.post('/analyze', async (req, res) => {
+router.post('/analyze', emailRateLimit, async (req, res) => {
   try {
     const { emailContent, senderEmail, subject } = req.body;
 
@@ -66,3 +71,5 @@ router.get('/test', (req, res) => {
 });
 
 export default router;
+
+
