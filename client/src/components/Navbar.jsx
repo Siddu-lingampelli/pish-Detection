@@ -76,7 +76,7 @@ const Navbar = () => {
         <nav
           className={`nav-links${menuOpen ? ' open' : ''}`}
           style={{
-            display: 'flex',
+            ...(menuOpen ? { display: 'flex' } : {}),
             justifyContent: 'center',
             gap: 0,
             height: '100%'
@@ -144,7 +144,7 @@ const Navbar = () => {
          </div>
        </nav>
 
-        <div className="nav-user-area" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        <div className="nav-user-area" style={{ alignItems: 'center', gap: 16 }}>
           <Clock />
           {isAuth ? (
             <>
