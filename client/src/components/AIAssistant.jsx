@@ -37,7 +37,7 @@ const AIAssistant = () => {
   if (!open) return (
     <button
       onClick={() => setOpen(true)}
-      className="focus-ring"
+      className="focus-ring aibot-launcher"
       style={{
         position: 'fixed', bottom: 24, right: 24,
         background: 'var(--ink)', color: 'var(--bone)',
@@ -53,7 +53,7 @@ const AIAssistant = () => {
   );
 
   return (
-    <div style={{
+    <div className="aibot-shell" style={{
       position: 'fixed', bottom: 24, right: 24,
       width: 400, height: 560,
       background: 'var(--bone)', border: '1px solid var(--ink)',
@@ -92,7 +92,7 @@ const AIAssistant = () => {
         <div ref={endRef} />
       </div>
 
-      <div style={{ borderTop: '1px solid var(--ink)', padding: 12, display: 'flex', gap: 8 }}>
+      <div style={{ borderTop: '1px solid var(--ink)', padding: 12, display: 'flex', gap: 8 }} className="input-group">
         <input
           type="text"
           value={input}

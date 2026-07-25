@@ -41,18 +41,18 @@ const ScreenshotAnalyzer = () => {
 
   return (
     <div style={{ background: 'var(--bone)', minHeight: 'calc(100vh - 56px)' }}>
-      <div style={{ borderBottom: '1px solid var(--ink-08)', padding: '10px 24px', display: 'flex', justifyContent: 'space-between' }} className="t-mono">
+      <div style={{ borderBottom: '1px solid var(--ink-08)', padding: '10px clamp(16px, 3vw, 24px)', display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }} className="t-mono">
         <div style={{ fontSize: 10, letterSpacing: '0.15em', color: 'var(--ink-60)' }}>§CONSOLE / SCREENSHOT</div>
         <div style={{ fontSize: 10, letterSpacing: '0.1em' }}><span className="blink" style={{ color: 'var(--signal)' }}>●</span> READY</div>
       </div>
 
-      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '40px 24px' }}>
+      <div style={{ maxWidth: 1280, margin: '0 auto', padding: 'clamp(24px, 4vw, 40px) clamp(16px, 3vw, 24px)' }}>
         {!result ? (
-          <div className="panel" style={{ padding: 40 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 24 }}>
+          <div className="panel" style={{ padding: 'clamp(20px, 3vw, 40px)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 24, gap: 16, flexWrap: 'wrap' }}>
               <div>
                 <div className="t-eyebrow" style={{ marginBottom: 8 }}>§IMG — INPUT</div>
-                <h2 className="h-display-2" style={{ fontSize: 28, margin: 0 }}>Upload a screenshot of a suspicious page.</h2>
+                <h2 className="h-display-2" style={{ fontSize: 'clamp(22px, 3vw, 28px)', margin: 0 }}>Upload a screenshot of a suspicious page.</h2>
               </div>
               <div className="t-mono" style={{ fontSize: 11, color: 'var(--ink-60)' }}>VISION + OCR · 10MB</div>
             </div>
@@ -64,7 +64,7 @@ const ScreenshotAnalyzer = () => {
               onDrop={(e) => { e.preventDefault(); setDrag(false); onSelect(e.dataTransfer.files?.[0]); }}
               style={{
                 border: `2px dashed ${drag ? 'var(--ink)' : 'var(--ink-16)'}`,
-                padding: 60,
+                padding: 'clamp(28px, 6vw, 60px)',
                 textAlign: 'center',
                 cursor: 'pointer',
                 background: drag ? 'var(--ink-04)' : 'transparent'
@@ -111,23 +111,23 @@ const ScreenshotResult = ({ result, onReset }) => {
 
   return (
     <div>
-      <div className={`verdict verdict-${tone}`} style={{ flexDirection: 'row' }}>
-        <div style={{ flex: 1, padding: 32 }}>
+      <div className={`verdict verdict-${tone} verdict-row`} style={{ flexDirection: 'row' }}>
+        <div className="verdict-pad" style={{ flex: 1, padding: 32, minWidth: 0 }}>
           <div className="t-eyebrow" style={{ color: tone === 'bone' ? 'var(--ink-60)' : 'var(--bone-60)' }}>§IMG — VERDICT</div>
-          <h2 className="h-display" style={{ fontSize: 48, margin: '12px 0 0' }}>{a?.riskLevel || 'UNKNOWN'} RISK</h2>
+          <h2 className="h-display" style={{ fontSize: 'clamp(32px, 5vw, 48px)', margin: '12px 0 0' }}>{a?.riskLevel || 'UNKNOWN'} RISK</h2>
           <p style={{ marginTop: 12, fontSize: 14, opacity: 0.8 }}>
             {a?.hasLoginForm ? 'Login form detected in screenshot' : 'No obvious login form detected'}
           </p>
         </div>
-        <div style={{ width: 1, background: tone === 'bone' ? 'var(--ink-08)' : 'var(--bone-08)' }} />
-        <div style={{ flex: 1, padding: 32, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, alignContent: 'center' }}>
+        <div className="verdict-divider" style={{ width: 1, background: tone === 'bone' ? 'var(--ink-08)' : 'var(--bone-08)', minHeight: 1 }} />
+        <div className="verdict-pad" style={{ flex: 1, padding: 32, display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 16, alignContent: 'center', minWidth: 0 }}>
           <div>
             <div className="t-eyebrow" style={{ color: tone === 'bone' ? 'var(--ink-60)' : 'var(--bone-60)' }}>RISK</div>
-            <div style={{ fontFamily: 'var(--type-display)', fontWeight: 700, fontSize: 40, lineHeight: 1, marginTop: 4 }}>{a?.riskScore || 0}<span style={{ fontSize: 14, opacity: 0.6, fontWeight: 500 }}>/100</span></div>
+            <div style={{ fontFamily: 'var(--type-display)', fontWeight: 700, fontSize: 'clamp(28px, 4vw, 40px)', lineHeight: 1, marginTop: 4 }}>{a?.riskScore || 0}<span style={{ fontSize: 14, opacity: 0.6, fontWeight: 500 }}>/100</span></div>
           </div>
           <div>
             <div className="t-eyebrow" style={{ color: tone === 'bone' ? 'var(--ink-60)' : 'var(--bone-60)' }}>CONFIDENCE</div>
-            <div style={{ fontFamily: 'var(--type-display)', fontWeight: 700, fontSize: 40, lineHeight: 1, marginTop: 4 }}>{((a?.confidence || 0) * 100).toFixed(0)}%</div>
+            <div style={{ fontFamily: 'var(--type-display)', fontWeight: 700, fontSize: 'clamp(28px, 4vw, 40px)', lineHeight: 1, marginTop: 4 }}>{((a?.confidence || 0) * 100).toFixed(0)}%</div>
           </div>
         </div>
       </div>

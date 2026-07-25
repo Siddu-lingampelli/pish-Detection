@@ -41,18 +41,18 @@ const QRScanner = () => {
 
   return (
     <div style={{ background: 'var(--bone)', minHeight: 'calc(100vh - 56px)' }}>
-      <div style={{ borderBottom: '1px solid var(--ink-08)', padding: '10px 24px', display: 'flex', justifyContent: 'space-between' }} className="t-mono">
+      <div style={{ borderBottom: '1px solid var(--ink-08)', padding: '10px clamp(16px, 3vw, 24px)', display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }} className="t-mono">
         <div style={{ fontSize: 10, letterSpacing: '0.15em', color: 'var(--ink-60)' }}>§CONSOLE / QR DECODER</div>
         <div style={{ fontSize: 10, letterSpacing: '0.1em' }}><span className="blink" style={{ color: 'var(--signal)' }}>●</span> READY</div>
       </div>
 
-      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '40px 24px' }}>
+      <div style={{ maxWidth: 1280, margin: '0 auto', padding: 'clamp(24px, 4vw, 40px) clamp(16px, 3vw, 24px)' }}>
         {!result ? (
-          <div className="panel" style={{ padding: 40 }}>
+          <div className="panel" style={{ padding: 'clamp(20px, 3vw, 40px)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 24 }}>
               <div>
                 <div className="t-eyebrow" style={{ marginBottom: 8 }}>§QR — INPUT</div>
-                <h2 className="h-display-2" style={{ fontSize: 28, margin: 0 }}>Upload a QR code image.</h2>
+                <h2 className="h-display-2" style={{ fontSize: 'clamp(22px, 3vw, 28px)', margin: 0 }}>Upload a QR code image.</h2>
               </div>
               <div className="t-mono" style={{ fontSize: 11, color: 'var(--ink-60)' }}>JPG · PNG · WEBP · 10MB MAX</div>
             </div>
@@ -64,7 +64,7 @@ const QRScanner = () => {
               onDrop={(e) => { e.preventDefault(); setDrag(false); onSelect(e.dataTransfer.files?.[0]); }}
               style={{
                 border: `2px dashed ${drag ? 'var(--ink)' : 'var(--ink-16)'}`,
-                padding: 60,
+                padding: 'clamp(28px, 6vw, 60px)',
                 textAlign: 'center',
                 cursor: 'pointer',
                 background: drag ? 'var(--ink-04)' : 'transparent',
@@ -112,16 +112,16 @@ const QRResult = ({ result, onReset }) => {
 
   return (
     <div>
-      <div className={`verdict verdict-${tone}`} style={{ flexDirection: 'row' }}>
-        <div style={{ flex: 1, padding: 32 }}>
+      <div className={`verdict verdict-${tone} verdict-row`} style={{ flexDirection: 'row' }}>
+        <div className="verdict-pad" style={{ flex: 1, padding: 32, minWidth: 0 }}>
           <div className="t-eyebrow" style={{ color: tone === 'bone' ? 'var(--ink-60)' : 'var(--bone-60)' }}>§QR — VERDICT</div>
-          <h2 className="h-display" style={{ fontSize: 48, margin: '12px 0 0' }}>{risk?.level || 'UNKNOWN'}</h2>
+          <h2 className="h-display" style={{ fontSize: 'clamp(32px, 5vw, 48px)', margin: '12px 0 0' }}>{risk?.level || 'UNKNOWN'}</h2>
           <p style={{ marginTop: 12, fontSize: 16, opacity: 0.8 }}>{risk?.action}</p>
         </div>
-        <div style={{ width: 1, background: tone === 'bone' ? 'var(--ink-08)' : 'var(--bone-08)' }} />
-        <div style={{ flex: 1, padding: 32, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+        <div className="verdict-divider" style={{ width: 1, background: tone === 'bone' ? 'var(--ink-08)' : 'var(--bone-08)', minHeight: 1 }} />
+        <div className="verdict-pad" style={{ flex: 1, padding: 32, display: 'flex', flexDirection: 'column', justifyContent: 'center', minWidth: 0 }}>
           <div className="t-eyebrow" style={{ color: tone === 'bone' ? 'var(--ink-60)' : 'var(--bone-60)' }}>RISK SCORE</div>
-          <div style={{ fontFamily: 'var(--type-display)', fontWeight: 700, fontSize: 72, lineHeight: 1, marginTop: 4, color: tone === 'signal' ? 'var(--bone)' : 'var(--ink)' }}>
+          <div style={{ fontFamily: 'var(--type-display)', fontWeight: 700, fontSize: 'clamp(48px, 7vw, 72px)', lineHeight: 1, marginTop: 4, color: tone === 'signal' ? 'var(--bone)' : 'var(--ink)' }}>
             {risk?.score || 0}<span style={{ fontSize: 18, opacity: 0.6, fontWeight: 500, marginLeft: 4 }}>/100</span>
           </div>
         </div>
@@ -135,7 +135,7 @@ const QRResult = ({ result, onReset }) => {
       {result.upiPayment && (
         <div className="panel" style={{ padding: 24, marginTop: 24, background: 'var(--ink)', color: 'var(--bone)' }}>
           <div className="t-eyebrow" style={{ marginBottom: 16, color: 'var(--bone-60)' }}>§UPI PAYMENT</div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+          <div className="grid-2" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 24 }}>
             <div>
               <div className="t-eyebrow" style={{ color: 'var(--bone-60)' }}>PAYEE</div>
               <div className="t-mono" style={{ fontSize: 18, marginTop: 4 }}>{result.upiPayment.payee}</div>

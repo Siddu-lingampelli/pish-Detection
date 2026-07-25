@@ -38,16 +38,16 @@ const History = () => {
 
   return (
     <div style={{ background: 'var(--bone)', minHeight: 'calc(100vh - 56px)' }}>
-      <div style={{ borderBottom: '1px solid var(--ink-08)', padding: '10px 24px', display: 'flex', justifyContent: 'space-between' }} className="t-mono">
+      <div style={{ borderBottom: '1px solid var(--ink-08)', padding: '10px clamp(16px, 3vw, 24px)', display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }} className="t-mono">
         <div style={{ fontSize: 10, letterSpacing: '0.15em', color: 'var(--ink-60)' }}>§CONSOLE / SCAN LOG</div>
         <div style={{ fontSize: 10, letterSpacing: '0.1em' }}><span className="blink" style={{ color: 'var(--signal)' }}>●</span> STREAMING</div>
       </div>
 
-      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '40px 24px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 32 }}>
+      <div style={{ maxWidth: 1280, margin: '0 auto', padding: 'clamp(24px, 4vw, 40px) clamp(16px, 3vw, 24px)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 32, gap: 16, flexWrap: 'wrap' }}>
           <div>
             <div className="t-eyebrow" style={{ marginBottom: 8 }}>§LOG</div>
-            <h1 className="h-display" style={{ fontSize: 48, margin: 0 }}>Scan history</h1>
+            <h1 className="h-display" style={{ fontSize: 'clamp(32px, 5vw, 48px)', margin: 0 }}>Scan history</h1>
             <p className="t-mono" style={{ fontSize: 12, color: 'var(--ink-60)', marginTop: 8 }}>
               {pagination.total || 0} records in local store
             </p>
@@ -59,7 +59,7 @@ const History = () => {
           )}
         </div>
 
-        <div style={{ display: 'flex', gap: 0, border: '1px solid var(--ink)', marginBottom: 24 }}>
+        <div className="filter-tabs" style={{ display: 'flex', gap: 0, border: '1px solid var(--ink)', marginBottom: 24, flexWrap: 'wrap' }}>
           {['all', 'Legit', 'Suspicious', 'Phishing'].map((f, i) => (
             <button
               key={f}
@@ -96,9 +96,9 @@ const History = () => {
           {scans.map((s, i) => {
             const tone = s.result === 'Phishing' ? 'signal' : s.result === 'Suspicious' ? 'ink' : 'bone';
             return (
-              <div key={s._id} style={{
+              <div key={s._id} className="history-row-grid" style={{
                 display: 'grid',
-                gridTemplateColumns: '120px 1fr 140px 100px 60px',
+                gridTemplateColumns: 'minmax(90px, 120px) minmax(0, 1fr) minmax(110px, 140px) minmax(60px, 100px) minmax(40px, 60px)',
                 alignItems: 'center',
                 padding: '16px 20px',
                 borderTop: i === 0 ? 0 : '1px solid var(--ink-08)',

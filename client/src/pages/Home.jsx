@@ -28,10 +28,12 @@ const Home = () => {
       {/* Status ribbon */}
       <div style={{
         borderBottom: '1px solid var(--ink-08)',
-        padding: '10px 24px',
+        padding: '10px clamp(16px, 3vw, 24px)',
         display: 'flex',
         justifyContent: 'space-between',
-        alignItems: 'center'
+        alignItems: 'center',
+        gap: 12,
+        flexWrap: 'wrap'
       }} className="t-mono">
         <div style={{ fontSize: 10, letterSpacing: '0.15em', color: 'var(--ink-60)' }}>
           §CONSOLE / URL SCANNER
@@ -41,7 +43,7 @@ const Home = () => {
         </div>
       </div>
 
-      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '40px 24px' }}>
+      <div style={{ maxWidth: 1280, margin: '0 auto', padding: 'clamp(24px, 4vw, 40px) clamp(16px, 3vw, 24px)' }}>
         <URLScanner onScan={handleScan} loading={loading} />
 
         {error && (

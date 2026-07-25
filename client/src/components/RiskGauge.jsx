@@ -11,7 +11,7 @@ const RiskGauge = ({ score = 0, label }) => {
         <div style={{
           fontFamily: 'var(--type-display)',
           fontWeight: 700,
-          fontSize: 56,
+          fontSize: 'clamp(40px, 6vw, 56px)',
           letterSpacing: '-0.04em',
           lineHeight: 1,
           color: tone === 'signal' ? 'var(--signal)' : 'var(--ink)'

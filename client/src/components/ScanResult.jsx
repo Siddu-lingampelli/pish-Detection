@@ -19,19 +19,19 @@ const ScanResult = ({ result }) => {
   return (
     <div style={{ marginTop: 32 }}>
       {/* VERDICT BAND */}
-      <div className={`verdict verdict-${cfg.tone}`} style={{ flexDirection: 'row', alignItems: 'stretch', padding: 0 }}>
-        <div style={{ flex: 1, padding: 32, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+      <div className={`verdict verdict-${cfg.tone} verdict-row`} style={{ flexDirection: 'row', alignItems: 'stretch', padding: 0 }}>
+        <div className="verdict-pad" style={{ flex: 1, padding: 32, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minWidth: 0 }}>
           <div>
             <div className="t-eyebrow" style={{ color: cfg.tone === 'bone' ? 'var(--ink-60)' : 'var(--bone-60)' }}>
               §VERDICT — {result.created_at ? new Date(result.created_at).toISOString().replace('T', ' ').slice(0, 19) : 'N/A'} UTC
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 12, flexWrap: 'wrap' }}>
               <Icon size={28} />
-              <h2 className="h-display" style={{ fontSize: 48, margin: 0 }}>{cfg.tag}</h2>
+              <h2 className="h-display" style={{ fontSize: 'clamp(32px, 5vw, 48px)', margin: 0 }}>{cfg.tag}</h2>
             </div>
             <p style={{ marginTop: 12, fontSize: 16, opacity: 0.8, maxWidth: 480 }}>{cfg.action}</p>
           </div>
-          <div style={{ display: 'flex', gap: 32, marginTop: 24, paddingTop: 16, borderTop: `1px solid ${cfg.tone === 'bone' ? 'var(--ink-08)' : 'var(--bone-08)'}` }}>
+          <div style={{ display: 'flex', gap: 24, marginTop: 24, paddingTop: 16, borderTop: `1px solid ${cfg.tone === 'bone' ? 'var(--ink-08)' : 'var(--bone-08)'}`, flexWrap: 'wrap' }}>
             <div>
               <div className="t-eyebrow" style={{ color: cfg.tone === 'bone' ? 'var(--ink-60)' : 'var(--bone-60)' }}>CONFIDENCE</div>
               <div className="t-mono" style={{ fontSize: 22, marginTop: 4, fontWeight: 600 }}>{conf}%</div>
@@ -46,8 +46,8 @@ const ScanResult = ({ result }) => {
             </div>
           </div>
         </div>
-        <div style={{ width: 1, background: cfg.tone === 'bone' ? 'var(--ink-08)' : 'var(--bone-08)' }} />
-        <div style={{ flex: 1, padding: 32, display: 'flex', alignItems: 'center' }}>
+        <div className="verdict-divider" style={{ width: 1, background: cfg.tone === 'bone' ? 'var(--ink-08)' : 'var(--bone-08)', minHeight: 1 }} />
+        <div className="verdict-pad" style={{ flex: 1, padding: 32, display: 'flex', alignItems: 'center', minWidth: 0 }}>
           <RiskGauge score={result.confidence_score != null ? Math.round(result.confidence_score * 100) : 0} />
         </div>
       </div>
@@ -84,7 +84,7 @@ const ScanResult = ({ result }) => {
       )}
 
       {/* KEYWORDS + THREATS */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginTop: 24 }}>
+      <div className="grid-2" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 24, marginTop: 24 }}>
         {result.meta_data?.keywords?.length > 0 && (
           <div className="panel" style={{ padding: 24 }}>
             <div className="t-eyebrow" style={{ marginBottom: 16 }}>§KEYWORDS</div>

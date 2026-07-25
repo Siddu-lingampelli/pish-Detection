@@ -46,27 +46,27 @@ const Landing = () => {
       {/* TOP STATUS BAR */}
       <header style={{
         borderBottom: '1px solid var(--ink)',
-        padding: '10px 32px',
+        padding: '10px clamp(12px, 3vw, 32px)',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
         fontSize: 11
       }}>
-        <div className="t-mono" style={{ display: 'flex', gap: 24, letterSpacing: '0.1em' }}>
+        <div className="t-mono" style={{ display: 'flex', gap: 16, letterSpacing: '0.1em' }}>
           <span>PG//02</span>
-          <span style={{ color: 'var(--ink-60)' }}>PHISHGUARD CONSOLE</span>
+          <span className="hide-mobile" style={{ color: 'var(--ink-60)' }}>PHISHGUARD CONSOLE</span>
         </div>
-        <div className="t-mono" style={{ display: 'flex', gap: 24, letterSpacing: '0.05em' }}>
-          <span style={{ color: 'var(--ink-60)' }}>v2.4.0</span>
-          <span><span className="blink" style={{ color: 'var(--signal)' }}>●</span> ALL SYSTEMS NOMINAL</span>
+        <div className="t-mono" style={{ display: 'flex', gap: 16, letterSpacing: '0.05em' }}>
+          <span className="hide-mobile" style={{ color: 'var(--ink-60)' }}>v2.4.0</span>
+          <span><span className="blink" style={{ color: 'var(--signal)' }}>●</span> <span className="hide-mobile">ALL SYSTEMS NOMINAL</span></span>
           <LiveClock />
         </div>
       </header>
 
       {/* HERO */}
-      <section style={{ padding: '80px 32px 64px', borderBottom: '1px solid var(--ink)', position: 'relative' }}>
+      <section style={{ padding: 'clamp(40px, 6vw, 80px) clamp(16px, 3vw, 32px) clamp(40px, 5vw, 64px)', borderBottom: '1px solid var(--ink)', position: 'relative' }}>
         <div style={{ maxWidth: 1280, margin: '0 auto' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 64, alignItems: 'start' }}>
+          <div className="landing-hero-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1.4fr) minmax(0, 1fr)', gap: 'clamp(24px, 4vw, 64px)', alignItems: 'start' }}>
             <div>
               <div className="t-eyebrow" style={{ marginBottom: 24, display: 'flex', alignItems: 'center', gap: 12 }}>
                 <span style={{ width: 24, height: 1, background: 'var(--ink)' }} />
@@ -83,7 +83,7 @@ const Landing = () => {
                 <Link to="/scanner"><button className="btn-primary">Open console →</button></Link>
                 <Link to="/register"><button className="btn-ghost">Request access</button></Link>
               </div>
-              <div style={{ display: 'flex', gap: 32, marginTop: 48, paddingTop: 24, borderTop: '1px solid var(--ink-08)' }}>
+              <div className="landing-stats-flex" style={{ display: 'flex', gap: 32, marginTop: 48, paddingTop: 24, borderTop: '1px solid var(--ink-08)', flexWrap: 'wrap' }}>
                 <div className="stat">
                   <div className="stat-num">0.8<span style={{ fontSize: 16, color: 'var(--ink-60)', fontWeight: 500 }}>s</span></div>
                   <div className="stat-label">Median verdict</div>
@@ -135,16 +135,16 @@ const Landing = () => {
       </section>
 
       {/* CAPABILITIES */}
-      <section style={{ padding: '96px 32px', borderBottom: '1px solid var(--ink)' }}>
+      <section style={{ padding: 'clamp(48px, 7vw, 96px) clamp(16px, 3vw, 32px)', borderBottom: '1px solid var(--ink)' }}>
         <div style={{ maxWidth: 1280, margin: '0 auto' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 64 }}>
+          <div className="landing-capabilities-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 2fr)', gap: 'clamp(24px, 5vw, 64px)' }}>
             <div>
               <div className="t-eyebrow" style={{ marginBottom: 16 }}>§01 — CAPABILITIES</div>
               <h2 className="h-display-2" style={{ fontSize: 'clamp(32px, 4vw, 56px)', margin: 0 }}>
                 Four surfaces.<br />One verdict engine.
               </h2>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 0, border: '1px solid var(--ink)' }}>
+            <div className="capability-cards-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 0, border: '1px solid var(--ink)' }}>
               {[
                 { code: '01', title: 'URL scanner', body: 'Heuristics, keyword intel, SSL validation, Google Safe Browsing, VirusTotal, URLScan.io, and AI reasoning on every submit.' },
                 { code: '02', title: 'QR decoder', body: 'Detects UPI scams, payment fraud, and embedded phishing URLs in image-based lures common in India and SEA.' },
@@ -152,12 +152,12 @@ const Landing = () => {
                 { code: '04', title: 'Email triage', body: 'Paste a suspicious email. Get a risk score, indicator list, and AI-generated explainer in seconds.' }
               ].map((c, i) => (
                 <div key={i} style={{
-                  padding: 32,
+                  padding: 'clamp(20px, 3vw, 32px)',
                   borderRight: i % 2 === 0 ? '1px solid var(--ink)' : 0,
                   borderBottom: i < 2 ? '1px solid var(--ink)' : 0
                 }}>
                   <div className="t-mono" style={{ fontSize: 11, color: 'var(--ink-60)', marginBottom: 12 }}>§{c.code}</div>
-                  <h3 className="h-display-2" style={{ fontSize: 24, margin: 0 }}>{c.title}</h3>
+                  <h3 className="h-display-2" style={{ fontSize: 'clamp(20px, 2.5vw, 24px)', margin: 0 }}>{c.title}</h3>
                   <p style={{ fontSize: 14, color: 'var(--ink-60)', lineHeight: 1.5, marginTop: 12 }}>{c.body}</p>
                 </div>
               ))}
@@ -167,14 +167,14 @@ const Landing = () => {
       </section>
 
       {/* HOW IT WORKS — REAL PROCESS, NOT NUMBERED FOR SHOW */}
-      <section style={{ padding: '96px 32px', borderBottom: '1px solid var(--ink)', background: 'var(--ink)', color: 'var(--bone)' }}>
+      <section style={{ padding: 'clamp(48px, 7vw, 96px) clamp(16px, 3vw, 32px)', borderBottom: '1px solid var(--ink)', background: 'var(--ink)', color: 'var(--bone)' }}>
         <div style={{ maxWidth: 1280, margin: '0 auto' }}>
           <div className="t-eyebrow" style={{ marginBottom: 16, color: 'var(--bone-60)' }}>§02 — DETECTION PIPELINE</div>
           <h2 className="h-display-2" style={{ fontSize: 'clamp(32px, 4vw, 56px)', margin: 0, maxWidth: 800 }}>
             Every submit runs through seven independent layers. The verdict is whichever layer fires first.
           </h2>
 
-          <div style={{ marginTop: 64, display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 0, border: '1px solid var(--bone-08)' }}>
+          <div className="landing-pipeline-grid" style={{ marginTop: 'clamp(32px, 5vw, 64px)', display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 0, border: '1px solid var(--bone-08)' }}>
             {[
               { n: '01', t: 'URL parse', s: '0.2ms' },
               { n: '02', t: 'Heuristics', s: '0.4ms' },
@@ -198,7 +198,7 @@ const Landing = () => {
       </section>
 
       {/* CTA */}
-      <section style={{ padding: '120px 32px' }}>
+      <section style={{ padding: 'clamp(64px, 9vw, 120px) clamp(16px, 3vw, 32px)' }}>
         <div style={{ maxWidth: 1280, margin: '0 auto', textAlign: 'center' }}>
           <div className="t-eyebrow" style={{ marginBottom: 24 }}>§03 — DEPLOY</div>
           <h2 className="h-display" style={{ fontSize: 'clamp(48px, 6vw, 88px)', margin: 0, maxWidth: 900, marginLeft: 'auto', marginRight: 'auto' }}>
@@ -215,8 +215,8 @@ const Landing = () => {
       </section>
 
       {/* FOOTER */}
-      <footer style={{ borderTop: '1px solid var(--ink)', padding: '32px' }}>
-        <div style={{ maxWidth: 1280, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 11 }} className="t-mono">
+      <footer style={{ borderTop: '1px solid var(--ink)', padding: 'clamp(20px, 3vw, 32px)' }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 11, gap: 16, flexWrap: 'wrap' }} className="t-mono">
           <span>PHISHGUARD © 2024 — DEFEND AT THE EDGE</span>
           <span style={{ color: 'var(--ink-60)' }}>PG//02 — CONSOLE BUILD</span>
         </div>

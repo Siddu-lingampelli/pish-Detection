@@ -30,16 +30,16 @@ const EmailScanner = () => {
 
   return (
     <div style={{ background: 'var(--bone)', minHeight: 'calc(100vh - 56px)' }}>
-      <div style={{ borderBottom: '1px solid var(--ink-08)', padding: '10px 24px', display: 'flex', justifyContent: 'space-between' }} className="t-mono">
+      <div style={{ borderBottom: '1px solid var(--ink-08)', padding: '10px clamp(16px, 3vw, 24px)', display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }} className="t-mono">
         <div style={{ fontSize: 10, letterSpacing: '0.15em', color: 'var(--ink-60)' }}>§CONSOLE / EMAIL TRIAGE</div>
         <div style={{ fontSize: 10, letterSpacing: '0.1em' }}><span className="blink" style={{ color: 'var(--signal)' }}>●</span> READY</div>
       </div>
 
-      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '40px 24px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: result ? '1fr 1fr' : '1fr', gap: 24 }}>
-          <div className="panel" style={{ padding: 32 }}>
+      <div style={{ maxWidth: 1280, margin: '0 auto', padding: 'clamp(24px, 4vw, 40px) clamp(16px, 3vw, 24px)' }}>
+        <div className="grid-2" style={{ display: 'grid', gridTemplateColumns: result ? 'repeat(2, minmax(0, 1fr))' : '1fr', gap: 24 }}>
+          <div className="panel" style={{ padding: 'clamp(20px, 3vw, 32px)' }}>
             <div className="t-eyebrow" style={{ marginBottom: 8 }}>§EML — INPUT</div>
-            <h2 className="h-display-2" style={{ fontSize: 24, margin: '0 0 24px' }}>Paste the email to triage.</h2>
+            <h2 className="h-display-2" style={{ fontSize: 'clamp(20px, 2.5vw, 24px)', margin: '0 0 24px' }}>Paste the email to triage.</h2>
 
             <label className="t-eyebrow" style={{ display: 'block', marginTop: 16 }}>Sender (optional)</label>
             <input type="email" value={email.sender} onChange={(e) => setEmail({ ...email, sender: e.target.value })} placeholder="from@example.com" className="field" />
@@ -58,7 +58,7 @@ const EmailScanner = () => {
 
             {error && <div className="t-mono" style={{ marginTop: 12, fontSize: 12, color: 'var(--signal)' }}>! {error}</div>}
 
-            <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
+            <div className="input-group" style={{ display: 'flex', gap: 12, marginTop: 24 }}>
               <button onClick={analyze} disabled={analyzing} className="btn-primary" style={{ flex: 1 }}>
                 {analyzing ? 'TRIAGING...' : 'ANALYZE EMAIL →'}
               </button>
@@ -79,8 +79,8 @@ const EmailResult = ({ result }) => {
     <div>
       <div className={`verdict verdict-${tone}`} style={{ padding: 24 }}>
         <div className="t-eyebrow" style={{ color: tone === 'bone' ? 'var(--ink-60)' : 'var(--bone-60)' }}>§EMAIL — VERDICT</div>
-        <h2 className="h-display" style={{ fontSize: 48, margin: '12px 0 0' }}>{result.riskLevel}</h2>
-        <div style={{ fontFamily: 'var(--type-display)', fontWeight: 700, fontSize: 56, lineHeight: 1, marginTop: 12 }}>
+        <h2 className="h-display" style={{ fontSize: 'clamp(32px, 5vw, 48px)', margin: '12px 0 0' }}>{result.riskLevel}</h2>
+        <div style={{ fontFamily: 'var(--type-display)', fontWeight: 700, fontSize: 'clamp(40px, 6vw, 56px)', lineHeight: 1, marginTop: 12 }}>
           {result.riskScore}<span style={{ fontSize: 16, opacity: 0.6, fontWeight: 500 }}>/100</span>
         </div>
       </div>

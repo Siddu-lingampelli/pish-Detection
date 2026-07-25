@@ -24,7 +24,7 @@ const Login = () => {
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'grid', gridTemplateColumns: '1fr 1fr', background: 'var(--bone)' }}>
+    <div className="auth-split" style={{ minHeight: '100vh', display: 'grid', gridTemplateColumns: '1fr 1fr', background: 'var(--bone)' }}>
       {/* LEFT: brand panel */}
       <div style={{ background: 'var(--ink)', color: 'var(--bone)', padding: 48, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
         <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -37,7 +37,7 @@ const Login = () => {
 
         <div>
           <div className="t-eyebrow" style={{ color: 'var(--bone-60)', marginBottom: 24 }}>§01 — SIGN IN</div>
-          <h1 className="h-display" style={{ fontSize: 72, margin: 0, lineHeight: 0.95 }}>
+          <h1 className="h-display" style={{ fontSize: 'clamp(44px, 7vw, 72px)', margin: 0, lineHeight: 0.95 }}>
             Welcome<br />back<span style={{ color: 'var(--signal)' }}>.</span>
           </h1>
           <p style={{ marginTop: 24, color: 'var(--bone-60)', maxWidth: 360, lineHeight: 1.5 }}>
@@ -52,7 +52,7 @@ const Login = () => {
 
       {/* RIGHT: form */}
       <div style={{ padding: 48, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <form onSubmit={submit} style={{ width: '100%', maxWidth: 380 }}>
+        <form onSubmit={submit} className="auth-form-mobile-full" style={{ width: '100%', maxWidth: 380 }}>
           <div className="t-eyebrow" style={{ marginBottom: 32 }}>§CREDENTIALS</div>
 
           <label className="t-eyebrow" style={{ display: 'block', marginTop: 24 }}>Email</label>

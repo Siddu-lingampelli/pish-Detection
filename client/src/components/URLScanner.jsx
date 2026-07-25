@@ -14,11 +14,11 @@ const URLScanner = ({ onScan, loading }) => {
   };
 
   return (
-    <div className="panel" style={{ padding: 40 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 24 }}>
+    <div className="panel" style={{ padding: 'clamp(20px, 3vw, 40px)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 24, gap: 16, flexWrap: 'wrap' }}>
         <div>
           <div className="t-eyebrow" style={{ marginBottom: 8 }}>§URL — INPUT</div>
-          <h2 className="h-display-2" style={{ fontSize: 28, margin: 0 }}>Submit a target URL for analysis.</h2>
+          <h2 className="h-display-2" style={{ fontSize: 'clamp(22px, 3vw, 28px)', margin: 0 }}>Submit a target URL for analysis.</h2>
         </div>
         <div className="t-mono" style={{ fontSize: 11, color: 'var(--ink-60)' }}>
           7 LAYERS · ~800MS
@@ -26,7 +26,7 @@ const URLScanner = ({ onScan, loading }) => {
       </div>
 
       <form onSubmit={handleSubmit}>
-        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 16 }}>
+        <div className="input-group" style={{ display: 'flex', alignItems: 'flex-end', gap: 16, flexWrap: 'wrap' }}>
           <div style={{ flex: 1 }}>
             <label className="t-eyebrow" htmlFor="url">Target</label>
             <input
@@ -40,7 +40,7 @@ const URLScanner = ({ onScan, loading }) => {
               style={{ fontFamily: 'var(--type-mono)' }}
             />
           </div>
-          <button type="submit" disabled={loading} className="btn-primary" style={{ height: 52, padding: '0 28px' }}>
+          <button type="submit" disabled={loading} className="btn-primary" style={{ height: 52, padding: '0 28px', minWidth: 160 }}>
             {loading ? <><FaSpinner className="animate-spin" /> ANALYZING</> : <>SCAN <FaArrowRight /></>}
           </button>
         </div>
