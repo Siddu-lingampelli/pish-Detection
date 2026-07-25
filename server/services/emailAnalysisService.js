@@ -25,6 +25,16 @@ class EmailAnalysisService {
         analysisResults.threats.push(...senderRisk.reasons);
       }
 
+      // Analyze each link for suspicious characteristics
+      const linkIssues = [];
+      for (const link of analysisResults.linksFound) {
+        const issues = this.analyzeLink(link);
+        linkIssues.push(...issues);
+      }
+      if (linkIssues.length > 0) {
+        analysisResults.threats.push(...[...new Set(linkIssues)].slice(0, 5));
+      }
+
       if (cerebrasService.isEnabled()) {
         const aiResult = await this.analyzeWithAI(emailContent, senderEmail, subject);
         if (aiResult) {
@@ -36,8 +46,10 @@ class EmailAnalysisService {
 
       let baseScore = 0;
       baseScore += analysisResults.suspiciousKeywords.length * 5;
-      baseScore += analysisResults.linksFound.length > 3 ? 15 : 0;
+      baseScore += analysisResults.linksFound.length > 3 ? 15 : analysisResults.linksFound.length > 0 ? 8 : 0;
       baseScore += senderRisk.isSuspicious ? 25 : 0;
+      baseScore += linkIssues.length * 12;
+      if (analysisResults.linksFound.some(l => l.startsWith('http://'))) baseScore += 10;
 
       analysisResults.riskScore = Math.min(Math.max(analysisResults.riskScore, baseScore), 100);
 
@@ -63,15 +75,67 @@ class EmailAnalysisService {
     return [...new Set(matches)];
   }
 
+  analyzeLink(url) {
+    const issues = [];
+    try {
+      const parsed = new URL(url);
+      const hostname = parsed.hostname.toLowerCase();
+
+      if (parsed.protocol !== 'https:') issues.push('Non-HTTPS link');
+
+      if (/^(?:\d{1,3}\.){3}\d{1,3}$/.test(hostname)) issues.push('IP address link');
+
+      const suspiciousTLDs = ['.tk','.ml','.ga','.cf','.gq','.xyz','.top','.work','.click','.download','.review','.stream','.bid','.trade','.webcam','.science','.date','.racing','.win','.party','.loan','.men','.website','.space','.site','.live','.online','.tech'];
+      const tld = '.' + hostname.split('.').pop();
+      if (suspiciousTLDs.includes(tld)) issues.push(`Suspicious TLD (${tld})`);
+
+      const domain = hostname.split('.').slice(-2).join('.');
+      const domainName = hostname.split('.')[hostname.split('.').length - 2];
+      if (domainName && /^[a-z0-9]{15,}$/i.test(domainName)) issues.push('Random-looking domain name');
+
+      const knownBrands = ['paypal','google','microsoft','apple','amazon','netflix','facebook','instagram','linkedin','twitter','whatsapp','dropbox','adobe','samsung','alibaba','ebay','dhl','fedex','ups','icloud','steam','spotify','airbnb','uber'];
+      if (domainName) {
+        const cleanDomain = domainName.toLowerCase().replace(/[^a-z0-9]/g, '');
+        for (const brand of knownBrands) {
+          if (cleanDomain.includes(brand) && cleanDomain !== brand) {
+            issues.push(`Suspicious: domain contains "${brand}"`);
+            break;
+          }
+        }
+      }
+
+      if (hostname.split('.').length > 4) issues.push('Excessive subdomains');
+      if (hostname.length > 40) issues.push('Unusually long domain');
+      if (/[^\x00-\x7F]/.test(hostname)) issues.push('Non-ASCII characters (homograph attack)');
+
+    } catch { issues.push('Invalid URL format'); }
+    return issues;
+  }
+
   detectSuspiciousKeywords(emailContent, subject) {
     const suspiciousPatterns = [
       'verify your account', 'confirm your identity', 'suspended account',
       'unusual activity', 'security alert', 'immediate action', 'urgent',
-      'click here', 'act now', 'limited time', 'expires today',
+      'click here', 'click the link', 'act now', 'limited time', 'expires today',
       'update payment', 'billing problem', 'refund', 'prize', 'winner',
       'congratulations', 'claim now', 'free money', 'tax refund',
       'ssn', 'social security', 'credit card', 'cvv', 'pin number',
-      'wire transfer', 'bitcoin', 'cryptocurrency', 'invest now'
+      'wire transfer', 'bitcoin', 'cryptocurrency', 'invest now',
+      'you have a', 'you won', 'selected you', 'you are the lucky',
+      'exclusive offer', 'gift card', 'giveaway', 'surprise',
+      'dear user', 'dear customer', 'dear valued', 'account has been',
+      'temporarily locked', 'suspended', 'restricted', 'unusual sign-in',
+      'unauthorized access', 'verify now', 'update your account',
+      'confirm your account', 'reactivate', 'reactivate your',
+      'login details', 'log in to', 'sign in to', 'your account will be',
+      'click the link below', 'link below', 'copy and paste',
+      'open the attachment', 'view the attachment',
+      'sent from', 'shared a document', 'shared a file',
+      'password reset', 'reset your password', 'change of password',
+      'payment confirmation', 'invoice attached', 'purchase confirmation',
+      'shipping confirmation', 'delivery notification',
+      'you have a message', 'you have received', 'check this out',
+      'free gift', 'free access', 'exclusive access', 'limited access'
     ];
 
     const found = [];
@@ -133,7 +197,6 @@ Respond ONLY with valid JSON (no markdown):
       const raw = await cerebrasService.completeJson({
         system: 'You are a cybersecurity analyst. Always output valid JSON.',
         user: prompt,
-        model: 'gpt-oss-120b',
         temperature: 0.2,
         maxTokens: 800
       });
