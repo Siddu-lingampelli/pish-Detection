@@ -187,11 +187,11 @@ class PhishingDetectionService {
       riskScore += 0.3;
     }
 
-    // Check for suspicious TLDs
+    // Check for suspicious TLDs (free/abuse-prone domains)
     const hasSuspiciousTLD = SUSPICIOUS_TLDS.some(tld => hostname.endsWith(tld));
     if (hasSuspiciousTLD) {
       riskFactors.push('Suspicious top-level domain');
-      riskScore += 0.2;
+      riskScore += 0.35;
     }
 
     // Check for @ symbol (often used to hide real domain)
@@ -231,7 +231,7 @@ class PhishingDetectionService {
     // Check for HTTPS
     if (parsedUrl.protocol !== 'https:') {
       riskFactors.push('No HTTPS/SSL encryption');
-      riskScore += 0.15;
+      riskScore += 0.25;
     }
 
     return {
@@ -301,12 +301,12 @@ class PhishingDetectionService {
 
     // Multiple keywords increase suspicion
     if (foundKeywords.length > 2) {
-      keywordScore += 0.2;
+      keywordScore += 0.3;
     }
 
     return {
       keywords: foundKeywords,
-      keywordScore: Math.min(keywordScore, 0.5)
+      keywordScore: Math.min(keywordScore, 0.6)
     };
   }
 
@@ -423,21 +423,38 @@ class PhishingDetectionService {
     try {
       console.log('🔍 Checking URLScan.io...');
 
-      // Submit for quick scan (don't wait for results)
-      const submission = await urlscanService.quickScan(url);
+      // Try to scan and wait briefly (max 2 retries = ~10s wait)
+      const result = await urlscanService.scanAndWait(url, 2, 5000);
 
-      if (!submission.success) {
-        console.log('⚠️ URLScan.io submission failed:', submission.error);
+      if (!result.success) {
+        if (result.timeout) {
+          console.log('⏳ URLScan.io scan still processing, returning deferral');
+          return {
+            submitted: true,
+            scanId: result.scanId,
+            resultUrl: `https://urlscan.io/result/${result.scanId}/`,
+            apiUrl: result.submission?.apiUrl,
+            message: 'Scan submitted. Results available at URLScan.io.',
+            source: 'URLScan.io'
+          };
+        }
+        console.log('⚠️ URLScan.io submission failed:', result.error);
         return null;
       }
 
-      // Return submission info (results can be retrieved later)
+      // Results ready — use structured analysis from getResults
+      const isMalicious = result.malicious || result.indicators?.some(i => i.severity === 'high');
+      const isSuspicious = result.indicators?.some(i => i.severity === 'medium');
+
+      console.log(`✅ URLScan.io analysis complete: ${result.indicators?.length || 0} indicators, malicious=${isMalicious}`);
+
       return {
         submitted: true,
-        scanId: submission.scanId,
-        resultUrl: submission.resultUrl,
-        apiUrl: submission.apiUrl,
-        message: 'Scan submitted. Results available in 10-30 seconds.',
+        isThreat: isMalicious,
+        score: isMalicious ? 0.5 : isSuspicious ? 0.2 : 0,
+        scanId: result.scanId,
+        resultUrl: result.reportUrl || `https://urlscan.io/result/${result.scanId}/`,
+        indicators: result.indicators || [],
         source: 'URLScan.io'
       };
 
@@ -506,13 +523,20 @@ class PhishingDetectionService {
     }
 
     // Add URLScan.io result
-    if (urlscanResult && urlscanResult.submitted) {
+    if (urlscanResult) {
+      if (urlscanResult.isThreat) {
+        totalScore += urlscanResult.score;
+        base.meta_data.threat_types = [...(base.meta_data.threat_types || []), ...(urlscanResult.indicators?.map(i => i.type.toUpperCase()) || ['MALICIOUS'])];
+        allRiskFactors.push(`Flagged malicious by URLScan.io (${urlscanResult.indicators?.length || 0} indicators)`);
+      }
       base.meta_data.urlscan = {
         scanId: urlscanResult.scanId,
         resultUrl: urlscanResult.resultUrl,
-        message: urlscanResult.message
+        message: urlscanResult.scanId ? 'Full scan report available at URLScan.io' : urlscanResult.message
       };
-      allRiskFactors.push('Submitted to URLScan.io for detailed analysis');
+      if (!urlscanResult.isThreat) {
+        allRiskFactors.push('Checked with URLScan.io');
+      }
     }
 
     base.meta_data.risk_factors = allRiskFactors;
