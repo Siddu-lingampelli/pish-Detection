@@ -95,11 +95,13 @@ export const getMe = async () => {
   try {
     const res = await api.get('/auth/me');
     return res.data;
-  } catch {
-    // Fallback to local session
-    const u = getUser();
-    if (!u) return { success: false, error: 'Not authenticated' };
-    return { success: true, user: u };
+  } catch (err) {
+    if (!err.response) {
+      const u = getUser();
+      if (!u) return { success: false, error: 'Not authenticated' };
+      return { success: true, user: u };
+    }
+    throw err;
   }
 };
 
@@ -109,10 +111,13 @@ export const getHistory = async (params = {}) => {
   try {
     const res = await api.get('/history', { params });
     return res.data;
-  } catch {
-    const { getLocalHistory } = await import('./localAuth');
-    const r = getLocalHistory(params);
-    return { success: true, data: r };
+  } catch (err) {
+    if (!err.response) {
+      const { getLocalHistory } = await import('./localAuth');
+      const r = getLocalHistory(params);
+      return { success: true, data: r };
+    }
+    throw err;
   }
 };
 
@@ -120,10 +125,13 @@ export const getStats = async () => {
   try {
     const res = await api.get('/stats');
     return res.data;
-  } catch {
-    const { getLocalStats } = await import('./localAuth');
-    const s = getLocalStats();
-    return { success: true, data: s };
+  } catch (err) {
+    if (!err.response) {
+      const { getLocalStats } = await import('./localAuth');
+      const s = getLocalStats();
+      return { success: true, data: s };
+    }
+    throw err;
   }
 };
 
@@ -131,11 +139,14 @@ export const deleteScan = async (id) => {
   try {
     const res = await api.delete(`/history/${id}`);
     return res.data;
-  } catch {
-    const { deleteLocalScan } = await import('./localAuth');
-    const removed = deleteLocalScan(id);
-    if (!removed) return { success: false, message: 'Not found' };
-    return { success: true, message: 'Deleted', data: removed };
+  } catch (err) {
+    if (!err.response) {
+      const { deleteLocalScan } = await import('./localAuth');
+      const removed = deleteLocalScan(id);
+      if (!removed) return { success: false, message: 'Not found' };
+      return { success: true, message: 'Deleted', data: removed };
+    }
+    throw err;
   }
 };
 
@@ -143,10 +154,13 @@ export const clearHistory = async () => {
   try {
     const res = await api.delete('/history');
     return res.data;
-  } catch {
-    const { clearLocalHistory } = await import('./localAuth');
-    const count = clearLocalHistory();
-    return { success: true, message: 'Cleared', data: { deletedCount: count } };
+  } catch (err) {
+    if (!err.response) {
+      const { clearLocalHistory } = await import('./localAuth');
+      const count = clearLocalHistory();
+      return { success: true, message: 'Cleared', data: { deletedCount: count } };
+    }
+    throw err;
   }
 };
 

@@ -28,11 +28,21 @@ app.set('trust proxy', 1);
 
 const isProd = process.env.NODE_ENV === 'production';
 const allowedOrigin = isProd 
-  ? (process.env.CLIENT_URL || true) 
+  ? (process.env.CLIENT_URL || false) 
   : [/^http:\/\/localhost:\d+$/, process.env.CLIENT_URL].filter(Boolean);
 
 app.use(helmet({
-  contentSecurityPolicy: false,
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "https:"],
+      connectSrc: ["'self'"],
+      fontSrc: ["'self'"],
+      manifestSrc: ["'self'"]
+    }
+  },
   crossOriginEmbedderPolicy: false,
   crossOriginResourcePolicy: { policy: 'cross-origin' }
 }));

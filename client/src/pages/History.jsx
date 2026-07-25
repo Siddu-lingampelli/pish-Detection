@@ -18,7 +18,7 @@ const History = () => {
         setScans(response.data.scans);
         setPagination(response.data.pagination);
       }
-    } catch {} finally { setLoading(false); }
+    } catch { setScans([]); setPagination({}); } finally { setLoading(false); }
   };
 
   const onDelete = async (id) => {
@@ -104,12 +104,12 @@ const History = () => {
                 borderTop: i === 0 ? 0 : '1px solid var(--ink-08)',
                 gap: 20
               }}>
-                <span className={`chip ${tone === 'signal' ? 'chip-signal' : 'chip-mute'}`}>{s.result.toUpperCase()}</span>
+                <span className={`chip ${tone === 'signal' ? 'chip-signal' : 'chip-mute'}`}>{(s.result || 'UNKNOWN').toUpperCase()}</span>
                 <div className="t-mono" style={{ fontSize: 12, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.url}</div>
                 <div className="t-mono" style={{ fontSize: 11, color: 'var(--ink-60)' }}>
-                  {new Date(s.created_at).toISOString().replace('T', ' ').slice(0, 16)} UTC
+                  {s.created_at ? new Date(s.created_at).toISOString().replace('T', ' ').slice(0, 16) : 'N/A'} UTC
                 </div>
-                <div className="t-mono" style={{ fontSize: 11, textAlign: 'right' }}>{s.scan_duration}ms</div>
+                <div className="t-mono" style={{ fontSize: 11, textAlign: 'right' }}>{s.scan_duration ?? '--'}ms</div>
                 <button onClick={() => onDelete(s._id)} className="t-mono" style={{ fontSize: 11, color: 'var(--ink-60)', textAlign: 'right' }}>DELETE</button>
               </div>
             );

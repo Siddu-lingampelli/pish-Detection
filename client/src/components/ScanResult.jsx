@@ -14,7 +14,7 @@ const ScanResult = ({ result }) => {
 
   const cfg = VerdictConfig(result.result);
   const Icon = cfg.icon;
-  const conf = (result.confidence_score * 100).toFixed(0);
+  const conf = result.confidence_score != null ? (result.confidence_score * 100).toFixed(0) : '--';
 
   return (
     <div style={{ marginTop: 32 }}>
@@ -23,7 +23,7 @@ const ScanResult = ({ result }) => {
         <div style={{ flex: 1, padding: 32, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
           <div>
             <div className="t-eyebrow" style={{ color: cfg.tone === 'bone' ? 'var(--ink-60)' : 'var(--bone-60)' }}>
-              §VERDICT — {new Date(result.created_at).toISOString().replace('T', ' ').slice(0, 19)} UTC
+              §VERDICT — {result.created_at ? new Date(result.created_at).toISOString().replace('T', ' ').slice(0, 19) : 'N/A'} UTC
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 12 }}>
               <Icon size={28} />
@@ -38,7 +38,7 @@ const ScanResult = ({ result }) => {
             </div>
             <div>
               <div className="t-eyebrow" style={{ color: cfg.tone === 'bone' ? 'var(--ink-60)' : 'var(--bone-60)' }}>DURATION</div>
-              <div className="t-mono" style={{ fontSize: 22, marginTop: 4, fontWeight: 600 }}>{result.scan_duration}ms</div>
+              <div className="t-mono" style={{ fontSize: 22, marginTop: 4, fontWeight: 600 }}>{result.scan_duration ?? '--'}ms</div>
             </div>
             <div>
               <div className="t-eyebrow" style={{ color: cfg.tone === 'bone' ? 'var(--ink-60)' : 'var(--bone-60)' }}>SSL</div>
@@ -48,7 +48,7 @@ const ScanResult = ({ result }) => {
         </div>
         <div style={{ width: 1, background: cfg.tone === 'bone' ? 'var(--ink-08)' : 'var(--bone-08)' }} />
         <div style={{ flex: 1, padding: 32, display: 'flex', alignItems: 'center' }}>
-          <RiskGauge score={Math.round(result.confidence_score * 100)} />
+          <RiskGauge score={result.confidence_score != null ? Math.round(result.confidence_score * 100) : 0} />
         </div>
       </div>
 

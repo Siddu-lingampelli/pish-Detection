@@ -612,7 +612,7 @@ class ScreenshotAnalysisService {
       elements.push(`Possible ${analysis.brandImpersonation.brands.join(', ')} impersonation`);
     }
 
-    if (analysis.visualAnalysis.suspiciousColors) {
+    if (analysis.visualAnalysis.hasSuspiciousColors) {
       elements.push('Suspicious color scheme detected');
     }
 

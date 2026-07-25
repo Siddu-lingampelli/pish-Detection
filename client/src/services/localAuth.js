@@ -88,7 +88,7 @@ export const getMe = async () => {
 
 export const saveScan = (record) => {
   const list = readHistory();
-  list.unshift({ ...record, _id: record._id || newId(), userId: readSession()?.user?.id, created_at: record.created_at || new Date().toISOString() });
+  list.unshift({ ...record, _id: record._id || newId(), userId: readSession()?.user?.id, created_at: record.created_at ?? new Date().toISOString() });
   if (list.length > 1000) list.length = 1000;
   writeHistory(list);
   bumpAnalytics(record.result);
@@ -96,9 +96,9 @@ export const saveScan = (record) => {
 
 export const getLocalHistory = ({ result, limit = 50, page = 1 } = {}) => {
   let list = readHistory();
-  if (readSession()?.user?.id) {
-    const uid = readSession().user.id;
-    list = list.filter(s => s.userId === uid || !s.userId);
+  const session = readSession();
+  if (session?.user?.id) {
+    list = list.filter(s => s.userId === session.user.id || !s.userId);
   }
   if (result && ['Legit', 'Suspicious', 'Phishing'].includes(result)) {
     list = list.filter(s => s.result === result);
@@ -142,7 +142,7 @@ export const getLocalStats = () => {
   const suspicious = a.counts.suspicious;
   const phishing = a.counts.phishing;
   const sevenDaysAgo = Date.now() - 7 * 86400000;
-  const recent = all.filter(s => new Date(s.created_at).getTime() >= sevenDaysAgo).length;
+  const recent = all.filter(s => s.created_at && new Date(s.created_at).getTime() >= sevenDaysAgo).length;
   const totalDuration = all.reduce((acc, s) => acc + (Number(s.scan_duration) || 0), 0);
   const avgDuration = all.length ? +(totalDuration / all.length).toFixed(2) : 0;
   const factorCount = {};

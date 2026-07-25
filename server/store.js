@@ -140,4 +140,5 @@ process.on('uncaughtException', (err) => {
 process.on('unhandledRejection', (reason) => {
   console.error('Unhandled rejection, flushing store...', reason?.message || reason);
   flush();
+  process.exit(1);
 });

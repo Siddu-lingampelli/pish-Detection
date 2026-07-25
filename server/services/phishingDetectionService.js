@@ -104,22 +104,19 @@ class PhishingDetectionService {
       
       // Try Google Safe Browsing API (if API key exists)
       let safeBrowsingResult = null;
-      if (process.env.GOOGLE_SAFE_BROWSING_API_KEY && 
-          process.env.GOOGLE_SAFE_BROWSING_API_KEY !== 'your_api_key_here') {
+      if (process.env.GOOGLE_SAFE_BROWSING_API_KEY) {
         safeBrowsingResult = await this.checkGoogleSafeBrowsing(url);
       }
 
       // Try VirusTotal API (if API key exists)
       let virusTotalResult = null;
-      if (process.env.VIRUSTOTAL_API_KEY && 
-          process.env.VIRUSTOTAL_API_KEY !== 'your_api_key_here') {
+      if (process.env.VIRUSTOTAL_API_KEY) {
         virusTotalResult = await this.checkVirusTotal(url);
       }
 
       // Try URLScan.io API (if API key exists) - Quick scan, don't wait
       let urlscanResult = null;
-      if (process.env.URLSCAN_API_KEY && 
-          process.env.URLSCAN_API_KEY !== 'your_api_key_here') {
+      if (process.env.URLSCAN_API_KEY) {
         urlscanResult = await this.checkURLScan(url);
       }
 

@@ -2,11 +2,8 @@ import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
-import dotenv from 'dotenv';
 import { requireAuth } from '../middleware/auth.js';
 import { findUserByEmail, findUserById, addUser } from '../store.js';
-
-dotenv.config();
 
 const router = express.Router();
 

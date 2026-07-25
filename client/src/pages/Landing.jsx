@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
 
 const LiveClock = () => {
   const [t, setT] = useState(() => new Date());
@@ -26,9 +25,9 @@ const LiveVerdict = () => {
   ];
   const [i, setI] = useState(0);
   useEffect(() => {
-    const id = setInterval(() => setI((i + 1) % samples.length), 2200);
+    const id = setInterval(() => setI(prev => (prev + 1) % samples.length), 2200);
     return () => clearInterval(id);
-  }, [i, samples.length]);
+  }, [samples.length]);
   const s = samples[i];
   return (
     <div className="t-mono" style={{ fontSize: 12, lineHeight: 1.7 }}>
