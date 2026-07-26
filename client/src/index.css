@@ -366,12 +366,14 @@ input, textarea, select { font-family: inherit; font-size: inherit; color: inher
     background: var(--bone) !important;
     border-bottom: 1px solid var(--ink) !important;
     z-index: 60 !important;
+    height: auto !important;
   }
   .nav-links.open a {
     padding: 14px 16px !important;
     border-left: 0 !important;
     border-right: 0 !important;
     border-bottom: 1px solid var(--ink-08) !important;
+    height: auto !important;
   }
   .nav-user-area {
     display: none !important;
