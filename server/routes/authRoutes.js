@@ -8,10 +8,6 @@ import { findUserByEmail, findUserById, addUser } from '../store.js';
 const router = express.Router();
 
 const JWT_SECRET = process.env.JWT_SECRET;
-if (!JWT_SECRET) {
-  console.error('FATAL: JWT_SECRET is not set');
-  process.exit(1);
-}
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const loginAttempts = new Map();

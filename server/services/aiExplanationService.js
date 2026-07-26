@@ -15,7 +15,7 @@ class AIExplanationService {
       const explanation = await cerebrasService.chat({
         system: 'You are a cybersecurity expert explaining phishing detection results to non-technical users. Be clear, concise, and educational. Keep responses under 150 words.',
         user: prompt,
-        model: 'gpt-oss-120b',
+        model: 'gemma-4-31b',
         temperature: 0.3,
         maxTokens: 350
       });

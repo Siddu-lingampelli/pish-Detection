@@ -34,7 +34,7 @@ Always be helpful, clear, and focus on education over fear.`;
         system: this.systemPrompt,
         history: conversationHistory,
         user: userMessage,
-        model: 'gpt-oss-120b',
+        model: 'gemma-4-31b',
         temperature: 0.7,
         maxTokens: 1000
       });

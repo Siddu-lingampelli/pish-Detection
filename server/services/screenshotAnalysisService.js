@@ -86,7 +86,7 @@ class ScreenshotAnalysisService {
           );
         }
         if (visionResult.suspiciousElements) {
-          analysisResults.textAnalysis.suspiciousKeywords.push(...visionResult.suspiciousElements);
+          analysisResults.suspiciousElements.push(...visionResult.suspiciousElements);
         }
 
         // Visual analysis
@@ -402,54 +402,6 @@ class ScreenshotAnalysisService {
         hasSubmitButton: false
       };
     }
-  }
-
-  /**
-   * Detect suspicious color schemes
-   */
-  detectSuspiciousColors(colors) {
-    // Phishing pages often use bright, alarming colors or try to mimic brands poorly
-    const suspiciousPatterns = [
-      /rgb\(25[0-5],\s*0,\s*0\)/,      // Bright red (alarm)
-      /rgb\(25[0-5],\s*255,\s*0\)/,    // Bright yellow/lime (warning)
-      /rgb\(25[0-5],\s*165,\s*0\)/     // Orange (caution)
-    ];
-
-    return colors.some(color => 
-      suspiciousPatterns.some(pattern => pattern.test(color))
-    );
-  }
-
-  /**
-   * Estimate if image contains input fields
-   */
-  estimateInputFields(image) {
-    // Simple heuristic: look for rectangular white/light regions
-    // In a production system, you'd use computer vision models
-    const width = image.bitmap.width;
-    const height = image.bitmap.height;
-    
-    // Count white/light pixels that might indicate input fields
-    let lightPixelCount = 0;
-    const sampleRate = 20;
-    
-    for (let y = 0; y < height; y += sampleRate) {
-      for (let x = 0; x < width; x += sampleRate) {
-        const color = image.getPixelColor(x, y);
-        const { r, g, b } = Jimp.intToRGBA(color);
-        
-        // Light pixels (potential input fields)
-        if (r > 200 && g > 200 && b > 200) {
-          lightPixelCount++;
-        }
-      }
-    }
-
-    const totalSamples = (width / sampleRate) * (height / sampleRate);
-    const lightRatio = lightPixelCount / totalSamples;
-
-    // If 10-40% of pixels are light, likely has input fields
-    return lightRatio > 0.1 && lightRatio < 0.4;
   }
 
   /**

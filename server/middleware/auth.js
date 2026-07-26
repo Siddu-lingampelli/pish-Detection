@@ -1,10 +1,6 @@
 import jwt from 'jsonwebtoken';
 
 const JWT_SECRET = process.env.JWT_SECRET;
-if (!JWT_SECRET) {
-  console.error('FATAL: JWT_SECRET is not set in middleware');
-  process.exit(1);
-}
 
 export const requireAuth = (req, res, next) => {
   const header = req.headers.authorization;

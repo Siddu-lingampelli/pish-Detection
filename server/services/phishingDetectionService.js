@@ -114,7 +114,7 @@ class PhishingDetectionService {
         virusTotalResult = await this.checkVirusTotal(url);
       }
 
-      // Try URLScan.io API (if API key exists) - Quick scan, don't wait
+      // Try URLScan.io API (if API key exists) - Scan and wait for results
       let urlscanResult = null;
       if (process.env.URLSCAN_API_KEY) {
         urlscanResult = await this.checkURLScan(url);

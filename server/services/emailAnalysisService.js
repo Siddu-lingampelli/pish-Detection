@@ -88,12 +88,11 @@ class EmailAnalysisService {
       const suspiciousTLDs = ['.tk','.ml','.ga','.cf','.gq','.xyz','.top','.work','.click','.download','.review','.stream','.bid','.trade','.webcam','.science','.date','.racing','.win','.party','.loan','.men','.website','.space','.site','.live','.online','.tech'];
       const knownTLDs = ['com','org','net','edu','gov','mil','io','co','uk','de','jp','fr','au','ca','us','eu','ru','cn','in','br','it','es','nl','se','no','fi','dk','pl','be','at','ch','gr','ie','nz','sg','hk','kr','my','ph','th','vn','za','ar','cl','co','mx','pe','ae','il','sa','qa','ng','ke'];
       const parts = hostname.split('.');
-      const tld = '.' + parts[parts.length - 1];
+      const rawTld = parts[parts.length - 1];
+      const tld = '.' + rawTld;
       const domainName = parts.length >= 2 ? parts[parts.length - 2] : parts[0];
 
       if (suspiciousTLDs.includes(tld)) issues.push(`Suspicious TLD (${tld})`);
-
-      const domainWithoutTLD = parts.length >= 2 ? parts.slice(-2).join('.') : hostname;
 
       const alphaNumName = domainName.replace(/[^a-z0-9]/gi, '');
       if (alphaNumName && alphaNumName.length >= 10 && /^[a-z]{10,}$/i.test(alphaNumName)) issues.push('Random-looking domain name');
@@ -113,7 +112,7 @@ class EmailAnalysisService {
       if (hostname.length > 40) issues.push('Unusually long domain');
       if (/[^\x00-\x7F]/.test(hostname)) issues.push('Non-ASCII characters (homograph attack)');
 
-      if (domainName && !knownTLDs.includes(parts[parts.length - 1]) && !suspiciousTLDs.includes(tld) && parts.length === 2) {
+      if (domainName && !knownTLDs.includes(rawTld) && !suspiciousTLDs.includes(tld) && parts.length === 2) {
         issues.push('Uncommon domain extension');
       }
 

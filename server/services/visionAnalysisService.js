@@ -59,7 +59,7 @@ Respond in this JSON format:
       };
 
       console.log(`✅ Vision analysis complete - Risk: ${analysis.riskScore}/100`);
-      console.log(`📝 Extracted text length: ${analysis.detectedBrands?.length || 0} brands`);
+      console.log(`📝 Extracted text length: ${(analysis.extractedText || '').length} chars, ${analysis.detectedBrands?.length || 0} brands`);
       console.log(`🏢 Brands detected: ${analysis.detectedBrands?.join(', ') || 'None'}`);
 
       return analysis;
